@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================
+   TRANSICIÓN GLOBAL DE TEMA
+   =========================== */
+*,
+*::before,
+*::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+}
+
+/* Evitar que transiciones de layout afecten animaciones específicas */
+.liquid,
+.animate-spin,
+.animate-pulse,
+[class*='animate-'] {
+    transition: none !important;
+}
+
+/* ===========================
+   SCROLLBAR OCULTA
+   =========================== */
+@layer utilities {
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* ===========================
+   SELECCIÓN DE TEXTO
+   =========================== */
+::selection {
+    background-color: #6366f1;
+    color: #ffffff;
+}
+
+/* ===========================
+   BODY BASE — dark mode
+   =========================== */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    @apply bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

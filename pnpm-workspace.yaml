@@ -1,0 +1,10 @@
+packages:
+  - "."
+
+# pnpm configuration
+# minimum-release-age: Prevent installing packages released less than 1440 minutes (24h) ago
+# This is a security measure to avoid supply-chain attacks with just-published malicious packages.
+packageManager: pnpm@latest
+
+settings:
+  minimum-release-age: "1440m"

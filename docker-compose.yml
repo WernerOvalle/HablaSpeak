@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  hablaspeak:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_GEMINI_API_KEY=${NEXT_PUBLIC_GEMINI_API_KEY:-}
+    image: hablaspeak:latest
+    container_name: hablaspeak-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_GEMINI_API_KEY=${NEXT_PUBLIC_GEMINI_API_KEY:-}
+    restart: unless-stopped
