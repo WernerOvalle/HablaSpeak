@@ -1,12 +1,25 @@
 version: '3.9'
 
 services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: habla
+      POSTGRES_PASSWORD: speakpass
+      POSTGRES_DB: hablaspeak
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
   hablaspeak:
     build:
       context: .
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_GEMINI_API_KEY=${NEXT_PUBLIC_GEMINI_API_KEY:-}
+        - NEXT_PUBLIC_OPENROUTER_API_KEY=${NEXT_PUBLIC_OPENROUTER_API_KEY:-}
     image: hablaspeak:latest
     container_name: hablaspeak-app
     ports:
@@ -14,4 +27,13 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_GEMINI_API_KEY=${NEXT_PUBLIC_GEMINI_API_KEY:-}
+      - NEXT_PUBLIC_OPENROUTER_API_KEY=${NEXT_PUBLIC_OPENROUTER_API_KEY:-}
+      - DATABASE_URL=postgresql://habla:speakpass@db:5432/hablaspeak?schema=public
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=hablaspeak-super-secret-key-123
+    depends_on:
+      - db
     restart: unless-stopped
+
+volumes:
+  pgdata:

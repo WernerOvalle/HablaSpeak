@@ -9,9 +9,9 @@ import {
   LoadingBubble,
 } from '../interview/InterviewComponents';
 
-const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
-const BASE_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+// Usamos OpenRouter API
+const OLLAMA_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENROUTER_API_KEY = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || '';
 
 const INITIAL_MESSAGE: ChatMessage = {
   role: 'ai',
@@ -78,8 +78,8 @@ export default function InterviewView({ onExit }: InterviewViewProps) {
     setUserInput('');
     setIsLoadingIA(true);
 
-    // Demo mode sin API Key
-    if (!API_KEY) {
+    // Demo mode si escriben exactamente "demo"
+    if (textToSend.toLowerCase() === 'demo') {
       await new Promise(r => setTimeout(r, 1200));
       const demoResponse =
         "Great answer! One quick note — use 'I have' instead of 'I has'. Keep it up! Now, what's your greatest professional strength?";
@@ -90,28 +90,69 @@ export default function InterviewView({ onExit }: InterviewViewProps) {
     }
 
     try {
-      const prompt = `You are Alex, a professional job interviewer.
-The user said: "${textToSend}".
-1. Correct their English errors briefly and kindly (one line max).
-2. Ask the next logical interview question.
-Keep it short (max 40 words) and English only.`;
+      const prompt = `You are Alex, a professional job interviewer helping a user practice English.
+The applicant said: "${textToSend}".
 
-      const response = await fetch(`${BASE_URL}?key=${API_KEY}`, {
+Structure your response EXACTLY like this (do not use markdown formatting like asterisks or bold):
+
+Feedback: [Briefly and kindly correct any English grammar or vocabulary mistakes the applicant made. If perfect, say "Great English!"].
+Next Question: [Ask ONE logical follow-up interview question].
+
+Keep the total response under 40 words. Strictly in English.`;
+
+      const response = await fetch(OLLAMA_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`
+        },
+        body: JSON.stringify({ 
+          model: 'openrouter/free', // Auto-enruta al mejor modelo gratuito disponible sin rate-limit 
+          messages: [
+            { role: 'system', content: prompt }
+          ],
+        }),
       });
       const data = await response.json();
-      const aiResponse =
-        data.candidates?.[0]?.content?.parts?.[0]?.text || "Interesting! Let's continue.";
+
+      if (data.error) {
+        const errMsg = `OpenRouter Error: ${data.error.message || data.error}`;
+        console.error('OpenRouter API error:', data.error);
+        setChatHistory(prev => [...prev, { role: 'ai', text: errMsg }]);
+        setIsLoadingIA(false);
+        return;
+      }
+
+      const aiResponse = data.choices?.[0]?.message?.content;
+      if (!aiResponse) {
+        console.error('Unexpected OpenRouter response:', JSON.stringify(data));
+        setChatHistory(prev => [...prev, { role: 'ai', text: `Unexpected response. Check console.` }]);
+        setIsLoadingIA(false);
+        return;
+      }
 
       setChatHistory(prev => [...prev, { role: 'ai', text: aiResponse }]);
+
+      // Extraer el feedback para guardar posibles errores
+      const feedbackMatch = aiResponse.match(/Feedback:\s*(.+?)(?=\n|Next Question:|$)/i);
+      if (feedbackMatch && feedbackMatch[1]) {
+        const feedbackText = feedbackMatch[1].trim();
+        // Si no es un mensaje de "todo perfecto", lo guardamos
+        if (!feedbackText.toLowerCase().includes('great english') && !feedbackText.toLowerCase().includes('perfect')) {
+          fetch('/api/errors', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ errorType: feedbackText })
+          }).catch(console.error);
+        }
+      }
+
       speakWithBrowser(aiResponse);
     } catch (e) {
-      console.error(e);
+      console.error('Fetch error:', e);
       setChatHistory(prev => [
         ...prev,
-        { role: 'ai', text: 'Sorry, connection issue. Please try again.' },
+        { role: 'ai', text: `Connection error: ${e instanceof Error ? e.message : String(e)}` },
       ]);
     } finally {
       setIsLoadingIA(false);
@@ -152,7 +193,7 @@ Keep it short (max 40 words) and English only.`;
           value={userInput}
           isListening={isListening}
           isLoading={isLoadingIA}
-          hasApiKey={!!API_KEY}
+          hasApiKey={true} // Siempre true con Ollama local
           onChange={setUserInput}
           onMic={startListening}
           onSend={handleSendMessage}

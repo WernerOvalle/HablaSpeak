@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  password      String
+  name          String?
+  errors        ErrorRecord[]
+  strikeCurrent Int           @default(0)
+  lastLoginAt   DateTime      @default(now())
+}
+
+model ErrorRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  errorType String   
+  count     Int      @default(1)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, errorType])
+}

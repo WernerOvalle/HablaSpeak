@@ -1,7 +1,8 @@
 'use client';
 
-import { AlertCircle, Mic, TrendingUp } from 'lucide-react';
+import { AlertCircle, Mic, TrendingUp, Loader2 } from 'lucide-react';
 import Navbar from '../Navbar';
+import { useEffect, useState } from 'react';
 
 type View = 'login' | 'dashboard' | 'scenarios' | 'interview' | 'pricing';
 
@@ -12,32 +13,37 @@ interface DashboardViewProps {
 }
 
 // Sub-componente: Card de errores detectados
-function ErrorsCard() {
-  const errors = [
-    { label: "Third person 's'", count: '5x', color: 'red' },
-    { label: "Pronunciation 'th'", count: '2x', color: 'indigo' },
-  ];
+function ErrorsCard({ errors, loading }: { errors: { label: string; count: number }[], loading: boolean }) {
+  const getSeverityColor = (count: number) => count > 3 ? 'red' : 'indigo';
 
   return (
     <div className="bg-white dark:bg-slate-800/80 p-6 rounded-[32px] border border-slate-100 dark:border-slate-700/50 shadow-sm transition-colors duration-300">
       <h3 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-6 text-sm">
         <AlertCircle size={16} className="text-indigo-500" /> Errores detectados
       </h3>
-      <div className="space-y-3">
-        {errors.map((e) => (
-          <div
-            key={e.label}
-            className={`p-3 rounded-2xl flex justify-between items-center text-[11px] font-bold
-              ${e.color === 'red'
-                ? 'bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-700 dark:text-red-400'
-                : 'bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-400'
-              }`}
-          >
-            <span>{e.label}</span>
-            <span>{e.count}</span>
-          </div>
-        ))}
-      </div>
+      
+      {loading ? (
+        <div className="flex justify-center py-4"><Loader2 className="animate-spin text-indigo-500" /></div>
+      ) : errors.length === 0 ? (
+        <p className="text-sm text-slate-400 text-center">¡No hay errores registrados aún!</p>
+      ) : (
+        <div className="space-y-3">
+          {errors.map((e) => (
+            <div
+              key={e.label}
+              title={e.label}
+              className={`p-3 rounded-2xl flex justify-between items-center text-[11px] font-bold truncate line-clamp-1 break-all
+                ${getSeverityColor(e.count) === 'red'
+                  ? 'bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-700 dark:text-red-400'
+                  : 'bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-400'
+                }`}
+            >
+              <span className="truncate mr-2">{e.label}</span>
+              <span className="shrink-0">{e.count}x</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -64,12 +70,15 @@ function SpeakButton({ onClick }: { onClick: () => void }) {
 }
 
 // Sub-componente: Card de racha de estudio
-function StreakCard() {
-  const streak = 4;
+function StreakCard({ streak, loading }: { streak: number, loading: boolean }) {
   return (
     <div className="bg-white dark:bg-slate-800/80 p-6 rounded-[32px] border border-slate-100 dark:border-slate-700/50 shadow-sm text-center transition-colors duration-300">
       <TrendingUp size={24} className="text-indigo-500 mx-auto mb-4" />
-      <div className="text-4xl font-black text-slate-900 dark:text-white">{streak} Días</div>
+      {loading ? (
+         <div className="flex justify-center h-10 items-center"><Loader2 className="animate-spin text-indigo-500" /></div>
+      ) : (
+         <div className="text-4xl font-black text-slate-900 dark:text-white">{streak} Días</div>
+      )}
       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Racha de estudio</p>
       <div className="flex justify-center gap-1.5 mt-6">
         {[1, 2, 3, 4, 5, 6, 7].map(i => (
@@ -84,6 +93,19 @@ function StreakCard() {
 }
 
 export default function DashboardView({ userPlan, questionsLeft, onNavigate }: DashboardViewProps) {
+  const [data, setData] = useState({ streak: 0, errors: [] as any[] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/dashboard')
+      .then(r => r.json())
+      .then(d => {
+        if (!d.error) setData(d);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#FDFDFD] dark:bg-slate-950 transition-colors duration-300">
       <Navbar userPlan={userPlan} onNavigate={onNavigate} />
@@ -91,7 +113,7 @@ export default function DashboardView({ userPlan, questionsLeft, onNavigate }: D
 
         {/* Panel izquierdo */}
         <div className="lg:col-span-3 space-y-6">
-          <ErrorsCard />
+          <ErrorsCard errors={data.errors} loading={loading} />
         </div>
 
         {/* Centro — Botón principal */}
@@ -114,7 +136,7 @@ export default function DashboardView({ userPlan, questionsLeft, onNavigate }: D
 
         {/* Panel derecho */}
         <div className="lg:col-span-3">
-          <StreakCard />
+          <StreakCard streak={data.streak} loading={loading} />
         </div>
       </main>
     </div>

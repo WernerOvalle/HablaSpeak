@@ -12,9 +12,13 @@
     "next": "14.2.29",
     "react": "^18",
     "react-dom": "^18",
-    "lucide-react": "^0.400.0"
+    "lucide-react": "^0.400.0",
+    "next-auth": "4.24.7",
+    "@auth/prisma-adapter": "^1.6.0",
+    "@prisma/client": "^5.14.0"
   },
   "devDependencies": {
+    "prisma": "^5.14.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

@@ -92,7 +92,7 @@ export function InterviewInput({
       </div>
 
       <p className="text-[10px] text-slate-500 mt-4 text-center font-bold tracking-[0.2em] uppercase italic opacity-60">
-        {hasApiKey ? 'Gemini AI Conectada' : 'Modo Demo – Sin API Key'}
+        {hasApiKey ? 'OpenRouter Free AI Conectada' : 'Modo Demo'}
       </p>
     </div>
   );
