@@ -23,10 +23,6 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
-ARG NEXT_PUBLIC_GEMINI_API_KEY
-ENV NEXT_PUBLIC_GEMINI_API_KEY=$NEXT_PUBLIC_GEMINI_API_KEY
-ARG NEXT_PUBLIC_OPENROUTER_API_KEY
-ENV NEXT_PUBLIC_OPENROUTER_API_KEY=$NEXT_PUBLIC_OPENROUTER_API_KEY
 
 RUN pnpm build
 
@@ -44,5 +40,5 @@ COPY --from=builder /app /app
 
 EXPOSE 3000
 
-# Push db on start then start next
-CMD ["sh", "-c", "npx prisma db push && npm run start"]
+# Espera DB lista, sincroniza Prisma, siembra y arranca Next
+CMD ["sh", "-c", "until npx prisma db push; do echo 'Esperando PostgreSQL...'; sleep 2; done; npm run db:seed; npm run start"]

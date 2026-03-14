@@ -2,27 +2,26 @@
 
 import { CheckCircle2, Sparkles, X } from 'lucide-react';
 import Navbar from '../Navbar';
-
-type View = 'login' | 'dashboard' | 'scenarios' | 'interview' | 'pricing';
+import type { UserPlan, View } from '@/types/app';
 
 interface PricingViewProps {
-  userPlan: 'free' | 'plus';
+  userPlan: UserPlan;
   onNavigate: (view: View) => void;
   onSubscribe: () => void;
 }
 
 const FREE_FEATURES = [
-  { text: '10 Preguntas al día', included: true },
-  { text: 'Modo Entrevista', included: true },
-  { text: 'Práctica de Restaurante', included: false },
-  { text: 'Corrección avanzada', included: false },
+  { text: 'Explorar plataforma y abrir clases seleccionadas', included: true },
+  { text: 'Visualizacion de contenido premium bloqueado', included: true },
+  { text: 'Catalogo completo de clases', included: false },
+  { text: 'Chatbot por clase con IA', included: false },
 ];
 
 const PLUS_FEATURES = [
-  'Chat de voz ILIMITADO',
-  'Todos los escenarios futuros',
-  'Análisis profundo de errores',
-  'Soporte prioritario 24/7',
+  'Catalogo completo de ingles general y call center',
+  'Chatbot IA contextual por cada clase',
+  'Dashboard paginado de errores recurrentes',
+  'Acceso a temarios premium (verbos, pronombres y estructuras)',
 ];
 
 export default function PricingView({ userPlan, onNavigate, onSubscribe }: PricingViewProps) {
@@ -40,7 +39,7 @@ export default function PricingView({ userPlan, onNavigate, onSubscribe }: Prici
 
         <div className="grid md:grid-cols-2 gap-8 w-full">
           {/* Plan Gratis */}
-          <div className="bg-white dark:bg-slate-800/80 p-10 rounded-[40px] border border-slate-100 dark:border-slate-700/50 text-left flex flex-col shadow-sm">
+          <div className="bg-white dark:bg-slate-800/80 p-10 rounded-[40px] border border-slate-900/20 dark:border-slate-700/50 text-left flex flex-col shadow-sm">
             <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-white">Gratis</h3>
             <div className="text-4xl font-black mb-10 text-slate-900 dark:text-white">
               $0<span className="text-sm font-medium text-slate-400">/mes</span>
@@ -88,7 +87,7 @@ export default function PricingView({ userPlan, onNavigate, onSubscribe }: Prici
               onClick={onSubscribe}
               className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-200 dark:shadow-indigo-900/40 hover:bg-indigo-700 active:scale-[0.98] transition-all uppercase text-xs tracking-widest"
             >
-              {userPlan === 'plus' ? '✨ Ya eres Plus' : 'Suscribirse Ahora'}
+              {userPlan === 'premium' ? 'Ya eres Premium' : 'Probar con usuario premium'}
             </button>
           </div>
         </div>

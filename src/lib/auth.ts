@@ -1,6 +1,8 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from './prisma';
+import { verifyPassword } from './password';
+import { updateUserStreakIfNeeded } from './streak';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -12,53 +14,44 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-
-        const isDemoUser = credentials.email === 'demo@hablaspeak.com' && credentials.password === '123456';
-        
-        let user = await prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
 
-        if (!user && isDemoUser) {
-          user = await prisma.user.create({
-            data: {
-              email: credentials.email,
-              password: credentials.password,
-              name: 'Demo User',
-              strikeCurrent: 1,
-              lastLoginAt: new Date()
-            }
-          });
+        if (!user || !verifyPassword(credentials.password, user.hashedPassword)) {
+          return null;
         }
 
-        if (user && user.password === credentials.password) {
-          const today = new Date();
-          const lastLogin = new Date(user.lastLoginAt);
-          const timeDiff = today.getTime() - lastLogin.getTime();
-          const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-          
-          let newStreak = user.strikeCurrent;
-          if (daysDiff === 1) {
-            newStreak += 1;
-          } else if (daysDiff > 1) {
-            newStreak = 1;
-          }
+        const syncedUser = await updateUserStreakIfNeeded(user);
 
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              strikeCurrent: newStreak,
-              lastLoginAt: new Date()
-            }
-          });
-
-          return { id: user.id, email: user.email, name: user.name };
-        }
-
-        return null;
+        return {
+          id: syncedUser.id,
+          email: syncedUser.email,
+          name: syncedUser.name,
+          isPremium: syncedUser.plan === 'PREMIUM',
+        };
       },
     }),
   ],
   session: { strategy: 'jwt' },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.isPremium = user.isPremium;
+      }
+
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id || '';
+        session.user.email = session.user.email || '';
+        session.user.isPremium = Boolean(token.isPremium);
+      }
+
+      return session;
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET || 'hablaspeak-super-secret',
 };

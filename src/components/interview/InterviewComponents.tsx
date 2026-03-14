@@ -39,7 +39,9 @@ export function ChatBubble({ message, onRepeat }: ChatBubbleProps) {
 interface InterviewInputProps {
   value: string;
   isListening: boolean;
+  isTranscribing: boolean;
   isLoading: boolean;
+  showSendHint: boolean;
   hasApiKey: boolean;
   onChange: (v: string) => void;
   onMic: () => void;
@@ -49,26 +51,51 @@ interface InterviewInputProps {
 export function InterviewInput({
   value,
   isListening,
+  isTranscribing,
   isLoading,
+  showSendHint,
   hasApiKey,
   onChange,
   onMic,
   onSend,
 }: InterviewInputProps) {
   return (
-    <div className="bg-slate-800/60 p-4 rounded-[32px] border border-slate-700 backdrop-blur-xl">
-      <div className="flex gap-3">
+    <div className="w-full bg-slate-800/60 p-3 sm:p-4 rounded-[24px] sm:rounded-[32px] border border-slate-700 backdrop-blur-xl">
+      <style>{`
+        @keyframes micPulse {
+          0% { transform: scale(0.9); opacity: 0.65; }
+          70% { transform: scale(1.25); opacity: 0; }
+          100% { transform: scale(1.25); opacity: 0; }
+        }
+      `}</style>
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           id="mic-btn"
           onClick={onMic}
-          aria-label={isListening ? 'Detener grabación' : 'Iniciar grabación de voz'}
-          className={`p-4 rounded-2xl transition-all ${
+          aria-label={isListening ? 'Detener grabacion' : 'Iniciar grabacion de voz'}
+          disabled={isLoading || isTranscribing}
+          className={`relative isolate overflow-hidden shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl transition-all border ${
             isListening
-              ? 'bg-red-500 animate-pulse shadow-lg shadow-red-500/30'
-              : 'bg-slate-700 hover:bg-slate-600 border border-slate-600'
-          }`}
+              ? 'bg-red-500/20 border-red-300/40 shadow-[0_8px_30px_rgba(239,68,68,0.35)]'
+              : 'bg-white/10 border-white/20 hover:bg-white/15 shadow-[0_8px_30px_rgba(15,23,42,0.35)]'
+          } backdrop-blur-xl disabled:opacity-50 disabled:cursor-not-allowed`}
         >
-          {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+          <span className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
+          {isListening ? (
+            <>
+              <span
+                className="absolute inset-0 rounded-2xl border border-red-300/60"
+                style={{ animation: 'micPulse 1.6s ease-out infinite' }}
+              />
+              <span
+                className="absolute inset-0 rounded-2xl border border-red-300/50"
+                style={{ animation: 'micPulse 1.6s ease-out infinite 0.45s' }}
+              />
+            </>
+          ) : null}
+          <span className="relative z-10 text-white flex items-center justify-center w-full h-full">
+          {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+          </span>
         </button>
 
         <input
@@ -76,8 +103,16 @@ export function InterviewInput({
           value={value}
           onChange={e => onChange(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !isLoading && onSend()}
-          placeholder={isListening ? 'Escuchando tu voz...' : 'Escribe tu respuesta...'}
-          className="flex-grow bg-slate-900/50 rounded-2xl px-6 py-4 text-sm outline-none border border-transparent focus:border-indigo-500/50 transition-all placeholder:text-slate-600 text-slate-100"
+          placeholder={
+            isListening
+              ? 'Grabando tu voz...'
+              : isTranscribing
+              ? 'Transcribiendo audio con Whisper...'
+              : showSendHint
+              ? 'Transcripcion lista. Presiona Enviar para mandar tu respuesta.'
+              : 'Escribe tu respuesta...'
+          }
+          className="min-w-0 flex-1 w-full bg-slate-900/50 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 text-sm outline-none border border-transparent focus:border-indigo-500/50 transition-all placeholder:text-slate-600 text-slate-100"
         />
 
         <button
@@ -85,14 +120,18 @@ export function InterviewInput({
           onClick={onSend}
           disabled={isLoading}
           aria-label="Enviar respuesta"
-          className="bg-indigo-600 p-4 rounded-2xl hover:bg-indigo-500 transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-indigo-600 rounded-xl sm:rounded-2xl hover:bg-indigo-500 transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
         >
-          <Send size={20} />
+          <Send size={18} />
         </button>
       </div>
 
-      <p className="text-[10px] text-slate-500 mt-4 text-center font-bold tracking-[0.2em] uppercase italic opacity-60">
-        {hasApiKey ? 'OpenRouter Free AI Conectada' : 'Modo Demo'}
+      <p className="text-[9px] sm:text-[10px] text-slate-500 mt-3 sm:mt-4 text-center font-bold tracking-[0.16em] sm:tracking-[0.2em] uppercase italic opacity-60">
+        {hasApiKey
+          ? showSendHint
+            ? 'Transcripcion lista: presiona enviar para mandar tu audio'
+            : 'Groq chat + whisper conectadas'
+          : 'Modo bloqueado'}
       </p>
     </div>
   );

@@ -7,23 +7,75 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Plan {
+  FREE
+  PREMIUM
+}
+
+enum LessonLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum LessonCategory {
+  GENERAL
+  CALL_CENTER
+}
+
 model User {
-  id            String        @id @default(cuid())
-  email         String        @unique
-  password      String
-  name          String?
-  errors        ErrorRecord[]
-  strikeCurrent Int           @default(0)
-  lastLoginAt   DateTime      @default(now())
+  id             String           @id @default(cuid())
+  email          String           @unique
+  hashedPassword String
+  name           String?
+  plan           Plan             @default(FREE)
+  errors         ErrorRecord[]
+  lessonQuestions LessonQuestion[]
+  streakCurrent  Int              @default(0)
+  lastLoginAt    DateTime         @default(now())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
 
 model ErrorRecord {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  errorType String   
-  count     Int      @default(1)
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  errorKey       String
+  title          String
+  latestFeedback String
+  count          Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  @@unique([userId, errorType])
+  @@unique([userId, errorKey])
+}
+
+model Lesson {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  title       String
+  description String
+  level       LessonLevel
+  category    LessonCategory
+  order       Int
+  isPremium   Boolean         @default(false)
+  syllabus    Json
+  questions   LessonQuestion[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model LessonQuestion {
+  id         String   @id @default(cuid())
+  lessonId   String
+  userId     String
+  prompt     String
+  answer     String?
+  feedback   String?
+  lesson     Lesson   @relation(fields: [lessonId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@index([lessonId, userId, createdAt])
 }

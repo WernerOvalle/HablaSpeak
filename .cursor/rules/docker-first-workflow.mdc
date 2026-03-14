@@ -1,0 +1,17 @@
+---
+description: Enforce Docker-first development workflow
+alwaysApply: true
+---
+
+# Docker First Workflow
+
+- Este proyecto se ejecuta con Docker Compose. Evita instalar o correr dependencias en host local.
+- No usar `npm install`, `npm run dev`, `prisma migrate`, o `node prisma/seed.js` directamente en la maquina host.
+- Para operaciones de app usa contenedor:
+  - `docker compose up --build`
+  - `docker compose exec hablaspeak npm run <script>`
+- Para operaciones de Prisma usa contenedor:
+  - `docker compose exec hablaspeak npx prisma migrate dev`
+  - `docker compose exec hablaspeak npx prisma db seed`
+- Si el usuario no pide otra cosa, todos los comandos de build/test/seed deben ejecutarse con Docker.
+- Si Docker no esta activo, primero indicar el comando de arranque con Docker en lugar de proponer instalacion local.

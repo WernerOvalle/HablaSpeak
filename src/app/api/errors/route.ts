@@ -1,39 +1,42 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
-import { authOptions } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/session';
+import { getErrorLabel } from '@/lib/errors';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session?.user?.email) {
+  const user = await getCurrentUser();
+
+  if (!user) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
-  const { errorType } = await req.json();
+  const { errorKey, latestFeedback } = await req.json();
 
-  if (!errorType) return NextResponse.json({ error: 'Falta errorType' }, { status: 400 });
+  if (!errorKey || !latestFeedback) {
+    return NextResponse.json({ error: 'Faltan errorKey o latestFeedback' }, { status: 400 });
+  }
 
-  const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-  if (!user) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
-
-  // Limpiar y acortar el nombre del error
-  const cleanErrorType = errorType.length > 50 ? errorType.substring(0, 50) + '...' : errorType;
-
-  // Upsert error record
   const record = await prisma.errorRecord.upsert({
     where: {
-      userId_errorType: {
+      userId_errorKey: {
         userId: user.id,
-        errorType: cleanErrorType
-      }
+        errorKey,
+      },
     },
-    update: { count: { increment: 1 } },
+    update: {
+      count: { increment: 1 },
+      latestFeedback,
+      title: getErrorLabel(errorKey),
+    },
     create: {
       userId: user.id,
-      errorType: cleanErrorType,
-      count: 1
-    }
+      errorKey,
+      title: getErrorLabel(errorKey),
+      latestFeedback,
+      count: 1,
+    },
   });
 
   return NextResponse.json({ success: true, record });
