@@ -48,7 +48,7 @@ Phase 2  → Kokoro on separate $12 droplet (natural, unlimited, fixed cost)
 - Max **10 questions** per session
 - Bot does NOT correct mid-conversation
 - Full feedback summary at the **end only**
-
+- add examen generation with ia button
 ### Free Practice Mode
 - Max **~30 questions** per session
 - ⚠️ Needs analysis: validate if 30 is the right range based on user retention data
