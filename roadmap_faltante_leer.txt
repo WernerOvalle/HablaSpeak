@@ -1,0 +1,56 @@
+# English Bot — Stack & Roadmap
+
+## Stack MVP (~$6.83/mo)
+
+| What | Provider | Cost |
+|---|---|---|
+| Server | DigitalOcean Droplet $6 | $6.00 |
+| Domain | DonDominio .com | $0.83 |
+| Email transactional | Resend (free 3k/mo) | $0 |
+| Support inbox | Gmail personal | $0 |
+| Auth | NextAuth Magic Link | $0 |
+| STT | Groq Whisper (free tier) | $0 |
+| LLM | Groq Llama (free tier) | $0 |
+| TTS | Browser Web Speech API | $0 |
+| DB | Postgres (free) | $0 |
+
+> ⚠️ Groq free STT/LLM covers ~25 users/day. Add credits when growing.
+> ⚠️ Do NOT use Groq TTS free tier in production (only 3,600 chars/day).
+
+---
+
+## TTS Upgrade Path
+
+```
+Now      → Browser Web Speech API ($0, robotic)
+Phase 2  → Kokoro on separate $12 droplet (natural, unlimited, fixed cost)
+```
+
+---
+
+## Scaling
+
+
+---
+
+## DNS Setup
+
+1. Buy domain at dondominio.com
+2. Change nameservers → `ns1/ns2/ns3.digitalocean.com`
+3. DigitalOcean → Networking → Add domain
+4. Resend → Add domain → paste DNS records in DO
+5. Wait 30 min ✅
+
+
+## Bot Behavior Specs
+
+### Scenario Mode
+- Max **10 questions** per session
+- Bot does NOT correct mid-conversation
+- Full feedback summary at the **end only**
+
+### Free Practice Mode
+- Max **~30 questions** per session
+- ⚠️ Needs analysis: validate if 30 is the right range based on user retention data
+
+ 
