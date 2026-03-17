@@ -41,6 +41,7 @@ interface InterviewInputProps {
   isListening: boolean;
   isTranscribing: boolean;
   isLoading: boolean;
+  disabled?: boolean;
   showSendHint: boolean;
   hasApiKey: boolean;
   onChange: (v: string) => void;
@@ -53,6 +54,7 @@ export function InterviewInput({
   isListening,
   isTranscribing,
   isLoading,
+  disabled = false,
   showSendHint,
   hasApiKey,
   onChange,
@@ -73,7 +75,7 @@ export function InterviewInput({
           id="mic-btn"
           onClick={onMic}
           aria-label={isListening ? 'Detener grabacion' : 'Iniciar grabacion de voz'}
-          disabled={isLoading || isTranscribing}
+          disabled={disabled || isLoading || isTranscribing}
           className={`relative isolate overflow-hidden shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl transition-all border ${
             isListening
               ? 'bg-red-500/20 border-red-300/40 shadow-[0_8px_30px_rgba(239,68,68,0.35)]'
@@ -102,7 +104,7 @@ export function InterviewInput({
           id="chat-input"
           value={value}
           onChange={e => onChange(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !isLoading && onSend()}
+          onKeyDown={e => e.key === 'Enter' && !disabled && !isLoading && onSend()}
           placeholder={
             isListening
               ? 'Grabando tu voz...'
@@ -110,15 +112,18 @@ export function InterviewInput({
               ? 'Transcribiendo audio con Whisper...'
               : showSendHint
               ? 'Transcripcion lista. Presiona Enviar para mandar tu respuesta.'
+              : disabled
+              ? 'Practica finalizada. Inicia un nuevo bloque para continuar.'
               : 'Escribe tu respuesta...'
           }
+          disabled={disabled}
           className="min-w-0 flex-1 w-full bg-slate-900/50 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 text-sm outline-none border border-transparent focus:border-indigo-500/50 transition-all placeholder:text-slate-600 text-slate-100"
         />
 
         <button
           id="send-btn"
           onClick={onSend}
-          disabled={isLoading}
+          disabled={disabled || isLoading}
           aria-label="Enviar respuesta"
           className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-indigo-600 rounded-xl sm:rounded-2xl hover:bg-indigo-500 transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
         >

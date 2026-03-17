@@ -4,6 +4,8 @@ import { BookOpen, Crown, Loader2, Send } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import Navbar from '../Navbar';
 import type { LessonSummary, UserPlan, View } from '@/types/app';
+import { GENERAL_CURRICULUM } from '@/lib/general-curriculum';
+import { CALLCENTER_CURRICULUM } from '@/lib/callcenter-curriculum';
 
 interface ClassesViewProps {
   moduleType: 'GENERAL' | 'CALL_CENTER';
@@ -110,6 +112,7 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
   const [lessonQuestion, setLessonQuestion] = useState('');
   const [loadingAssistant, setLoadingAssistant] = useState(false);
   const [lessonChats, setLessonChats] = useState<LessonChat>({});
+  const [showMobileLessonDetail, setShowMobileLessonDetail] = useState(false);
 
   useEffect(() => {
     fetch('/api/lessons')
@@ -141,8 +144,13 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
     }
   }, [filteredLessons, selectedLessonId]);
 
+  useEffect(() => {
+    setShowMobileLessonDetail(false);
+  }, [moduleType]);
+
   const lessonDocs = useMemo<Record<string, LessonDoc>>(
     () => ({
+      ...CALLCENTER_CURRICULUM,
       'beginner-greetings': {
         intro:
           'Aprendes la base del idioma con estructura correcta: sujeto + verbo to be + complemento. Esta clase te permite presentarte sin errores comunes.',
@@ -339,205 +347,6 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
           'Practica una respuesta STAR diaria de 60 segundos.',
         ],
       },
-      'call-center-opening-script': {
-        intro:
-          'Entrenas apertura profesional para dar seguridad desde el primer contacto y reducir friccion inicial.',
-        topicDetails: [
-          {
-            label: 'Apertura profesional',
-            explanation:
-              'Debes incluir saludo, nombre, empresa y ofrecimiento de ayuda en menos de 15 segundos.',
-            example: 'Good morning, this is Ana from HablaSpeak Support. How can I assist you today?',
-          },
-          {
-            label: 'Verificacion de seguridad',
-            explanation:
-              'Verifica identidad antes de compartir informacion sensible. Explica brevemente por que lo haces.',
-            example: 'Could you please confirm your full name and last 4 digits of your ID?',
-          },
-        ],
-        rules: [
-          {
-            label: 'Opening en tres pasos',
-            rule: 'Greeting + identification + purpose.',
-            correct: 'Hello, this is Laura from Support. I am calling to help with your account request.',
-            incorrect: 'Hello, account request, tell me your data.',
-            fix: 'Sigue el orden y manten tono cordial.',
-          },
-          {
-            label: 'Consentimiento de verificacion',
-            rule: 'Pide datos con frase de seguridad clara.',
-            correct: 'For security, may I verify your date of birth?',
-            incorrect: 'Give me your date of birth now.',
-            fix: 'Usa lenguaje cortés y explica motivo.',
-          },
-        ],
-        practice: [
-          {
-            prompt: 'Escribe un opening de 2 lineas para soporte tecnico.',
-            sampleAnswer:
-              'Good afternoon, this is Marco from HablaSpeak Technical Support. I can help you with your connection issue today.',
-          },
-          {
-            prompt: 'Redacta una pregunta de verificacion amable.',
-            sampleAnswer: 'For security, could you confirm your billing zip code, please?',
-          },
-        ],
-        tips: [
-          'Sonrie al hablar; mejora entonacion y percepcion de empatia.',
-          'Evita preguntas dobles en apertura; una por vez.',
-          'No uses jerga interna con clientes nuevos.',
-        ],
-      },
-      'call-center-objections': {
-        intro:
-          'Aprendes a responder objeciones con empatia y metodo para mantener control sin escalar tension.',
-        topicDetails: [
-          {
-            label: 'Empatia inicial',
-            explanation:
-              'Antes de explicar, valida la emocion del cliente. Esto abre espacio para negociar la solucion.',
-            example: 'I understand how frustrating this situation is for you.',
-          },
-          {
-            label: 'Respuesta estructurada',
-            explanation: 'Usa una secuencia clara: reconocer, aclarar, resolver y confirmar.',
-            example: 'Let me check this now, and I will update you in two minutes.',
-          },
-        ],
-        rules: [
-          {
-            label: 'No contradigas de inmediato',
-            rule: 'Primero reconoce, luego corrige con datos.',
-            correct: 'I understand your concern. Let me review the timeline and explain what happened.',
-            incorrect: 'You are wrong. The system is correct.',
-            fix: 'Empieza con empatia para reducir resistencia.',
-          },
-          {
-            label: 'Cierre con siguiente paso',
-            rule: 'Siempre termina la respuesta con accion y tiempo.',
-            correct: 'I will reset the service now and confirm in 2 minutes.',
-            incorrect: 'I will check it.',
-            fix: 'Agrega accion concreta y tiempo estimado.',
-          },
-        ],
-        practice: [
-          {
-            prompt: 'Responde objecion: This is too expensive.',
-            sampleAnswer:
-              'I understand your concern about cost. Let me explain the plan options and recommend the most affordable one for your usage.',
-          },
-          {
-            prompt: 'Crea una frase de seguimiento en 1 linea.',
-            sampleAnswer: 'I will send you a confirmation email in the next 5 minutes.',
-          },
-        ],
-        tips: [
-          'Controla velocidad de voz cuando el cliente sube tono.',
-          'No prometas tiempos que no puedas cumplir.',
-          'Resume la solucion en una frase final.',
-        ],
-      },
-      'call-center-escalations': {
-        intro:
-          'Te prepara para escalar casos complejos con trazabilidad, claridad y confianza para el cliente.',
-        topicDetails: [
-          {
-            label: 'Cuando escalar',
-            explanation:
-              'Escala solo si el caso supera tus permisos, requiere otra area o hay riesgo alto para cliente/empresa.',
-            example: 'I will escalate this case to our technical specialists.',
-          },
-          {
-            label: 'Expectativas claras',
-            explanation:
-              'Define tiempo estimado, canal y responsable de seguimiento para reducir incertidumbre del cliente.',
-            example: 'You will receive an update by email within 24 hours.',
-          },
-        ],
-        rules: [
-          {
-            label: 'Escalar con contexto completo',
-            rule: 'Incluye resumen, acciones hechas y evidencia relevante.',
-            correct: 'I have documented all troubleshooting steps before escalation.',
-            incorrect: 'I escalated the case. Please check.',
-            fix: 'Entrega contexto para evitar reprocesos.',
-          },
-          {
-            label: 'No abandonar al cliente',
-            rule: 'Explica que pasara despues y cuando volvera a tener noticias.',
-            correct: 'Our specialist team will contact you by 3 PM today.',
-            incorrect: 'Someone will contact you.',
-            fix: 'Da plazo especifico y canal.',
-          },
-        ],
-        practice: [
-          {
-            prompt: 'Escribe una frase para justificar escalacion tecnica.',
-            sampleAnswer:
-              'This issue requires advanced diagnostics, so I will escalate it to our technical specialists immediately.',
-          },
-          {
-            prompt: 'Escribe cierre con SLA en una linea.',
-            sampleAnswer: 'You will receive an update by email within 24 hours.',
-          },
-        ],
-        tips: [
-          'Confirma que el cliente entendio el siguiente paso.',
-          'Evita lenguaje ambiguo como soon o maybe.',
-          'Registra todo antes de transferir.',
-        ],
-      },
-      'call-center-closing-followup': {
-        intro:
-          'Aprendes a cerrar llamadas con profesionalismo, confirmando acuerdos y reduciendo recontactos.',
-        topicDetails: [
-          {
-            label: 'Cierre estructurado',
-            explanation:
-              'Un buen cierre resume solucion, confirma satisfaccion y deja claro el proximo canal de contacto.',
-            example: 'Today we updated your account, and you will receive a confirmation email in 10 minutes.',
-          },
-          {
-            label: 'Follow-up profesional',
-            explanation:
-              'Define responsable, medio y plazo. Sin follow-up claro, el cliente vuelve a llamar por incertidumbre.',
-            example: 'If you need more help, reply to the same email and we will assist you.',
-          },
-        ],
-        rules: [
-          {
-            label: 'Resumen en una frase',
-            rule: 'Indica que se hizo + que sigue.',
-            correct: 'We reset your password and you can log in now; I will email the steps as well.',
-            incorrect: 'Okay, done, bye.',
-            fix: 'Incluye accion y siguiente paso antes de despedirte.',
-          },
-          {
-            label: 'Cierre cortes y accionable',
-            rule: 'Agradece, valida y deja canal claro.',
-            correct: 'Thank you for your patience. If anything else comes up, please reply to our support email.',
-            incorrect: 'Call again if needed.',
-            fix: 'Ofrece canal concreto y tono profesional.',
-          },
-        ],
-        practice: [
-          {
-            prompt: 'Escribe un cierre de 2 lineas para caso resuelto.',
-            sampleAnswer:
-              'Your service is active again, and I sent a confirmation email with the details. Thank you for your time, and please reply to that email if you need any additional help.',
-          },
-          {
-            prompt: 'Escribe una frase de agradecimiento profesional.',
-            sampleAnswer: 'Thank you for your patience and for contacting HablaSpeak Support today.',
-          },
-        ],
-        tips: [
-          'Nunca cierres sin confirmar que cliente no tiene mas dudas.',
-          'Menciona ticket o correo para continuidad.',
-          'Usa frases cortas para evitar confusiones al final.',
-        ],
-      },
     }),
     []
   );
@@ -547,14 +356,28 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
     [lessonDocs, selectedLesson]
   );
 
+  const selectedGeneralTopic = useMemo(() => {
+    if (!selectedLesson || selectedLesson.category !== 'GENERAL') return null;
+    for (const section of GENERAL_CURRICULUM) {
+      const topic = section.topics.find(t => t.slug === selectedLesson.slug);
+      if (topic) return topic;
+    }
+    return null;
+  }, [selectedLesson]);
+
   const canPreviewLesson = (lesson: LessonSummary) =>
     lesson.category === 'GENERAL' && lesson.level === 'BEGINNER';
 
   const canOpenLesson = (lesson: LessonSummary) =>
     userPlan === 'premium' || canPreviewLesson(lesson);
 
-  const handleAskLessonAssistant = async () => {
-    if (!selectedLesson || !lessonQuestion.trim()) {
+  const quickSuggestions =
+    moduleType === 'GENERAL'
+      ? ['Give me examples for this exercise', 'Create a quiz for this topic', 'Summarize this lesson']
+      : ['Give me examples for this call center scenario', 'Create a short quiz for this topic', 'Summarize this as a call script'];
+
+  const handleAskLessonAssistant = async (suggestedQuestion?: string) => {
+    if (!selectedLesson) {
       return;
     }
 
@@ -563,7 +386,11 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
       return;
     }
 
-    const question = lessonQuestion.trim();
+    const question = (suggestedQuestion || lessonQuestion).trim();
+    if (!question) {
+      return;
+    }
+
     setLessonQuestion('');
     setLoadingAssistant(true);
 
@@ -613,6 +440,7 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
             return;
           }
           setSelectedLessonId(lesson.id);
+          setShowMobileLessonDetail(true);
         }}
         className={`w-full text-left rounded-2xl border p-4 transition-all ${
           isSelected
@@ -671,7 +499,7 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
           </div>
         ) : (
           <section className="grid lg:grid-cols-12 gap-4 sm:gap-6">
-            <aside className="lg:col-span-3 space-y-4">
+            <aside className={`lg:col-span-3 space-y-4 ${showMobileLessonDetail ? 'hidden lg:block' : 'block'}`}>
               <div className="rounded-2xl p-4 bg-white dark:bg-slate-800/80 border border-slate-900/20 dark:border-slate-700">
                 <h2 className="font-black text-sm uppercase tracking-[0.2em] text-slate-500 mb-3">
                   {moduleType === 'GENERAL' ? 'Lecciones generales' : 'Lecciones call center'}
@@ -682,9 +510,15 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
               </div>
             </aside>
 
-            <article className="lg:col-span-5 rounded-[24px] sm:rounded-[28px] border border-slate-900/20 dark:border-slate-700 bg-white dark:bg-slate-800/80 p-4 sm:p-6">
+            <article className={`lg:col-span-5 rounded-[24px] sm:rounded-[28px] border border-slate-900/20 dark:border-slate-700 bg-white dark:bg-slate-800/80 p-4 sm:p-6 ${showMobileLessonDetail ? 'block' : 'hidden lg:block'}`}>
               {selectedLesson ? (
                 <>
+                  <button
+                    onClick={() => setShowMobileLessonDetail(false)}
+                    className="mb-4 lg:hidden text-indigo-600 dark:text-indigo-300 text-sm font-bold"
+                  >
+                    ← Volver a temas
+                  </button>
                   <div className="flex flex-wrap items-center gap-2 mb-3">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-black text-indigo-500">
                       {categoryLabel(selectedLesson.category)}
@@ -696,80 +530,108 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
                   <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-3">{selectedLesson.title}</h2>
                   <p className="text-slate-500 dark:text-slate-400 mb-6">{selectedLesson.description}</p>
 
-                  <div className="rounded-2xl border border-slate-900/20 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/60 mb-6">
-                    <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 mb-3">Explicacion del tema</h3>
-                    <p className="text-sm text-slate-700 dark:text-slate-200">
-                      {selectedLessonDoc?.intro ||
-                        'Tema orientado a reforzar tu comunicacion en ingles con estructura clara y practica guiada.'}
-                    </p>
-                  </div>
-
-                  <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 mb-3">Temario</h3>
-                  <div className="space-y-2 mb-6">
-                    {selectedLesson.syllabus.map(item => (
-                      <div key={item} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
-                        <BookOpen size={14} className="text-indigo-500 shrink-0" />
-                        <span>{item}</span>
+                  {moduleType === 'GENERAL' ? (
+                    <>
+                      {selectedGeneralTopic ? (
+                        <div className="space-y-4">
+                          <div className="rounded-2xl border border-slate-900/20 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/60">
+                            <p className="text-xs uppercase tracking-[0.2em] font-black text-slate-400 mb-1">Explicacion</p>
+                            <p className="text-sm text-slate-700 dark:text-slate-200">{selectedGeneralTopic.explanation}</p>
+                          </div>
+                          <div className="rounded-2xl border border-indigo-200 dark:border-indigo-500/30 p-4 bg-indigo-50 dark:bg-indigo-500/10">
+                            <p className="text-xs uppercase tracking-[0.2em] font-black text-indigo-500 mb-1">Ejemplo</p>
+                            <p className="text-sm text-indigo-700 dark:text-indigo-200 font-medium">{selectedGeneralTopic.example}</p>
+                          </div>
+                          <div className="rounded-2xl border border-dashed border-slate-900/30 dark:border-slate-600 p-4 bg-white dark:bg-slate-900/40">
+                            <p className="text-xs uppercase tracking-[0.2em] font-black text-slate-400 mb-1">Ejercicio</p>
+                            <p className="text-sm text-slate-700 dark:text-slate-200">{selectedGeneralTopic.exercise}</p>
+                          </div>
+                          <div className="rounded-2xl border border-emerald-200 dark:border-emerald-500/30 p-4 bg-emerald-50 dark:bg-emerald-500/10">
+                            <p className="text-xs uppercase tracking-[0.2em] font-black text-emerald-600 mb-1">Tip</p>
+                            <p className="text-sm text-emerald-700 dark:text-emerald-200">{selectedGeneralTopic.tip}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {selectedLesson.syllabus.map(item => (
+                            <div key={item} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+                              <BookOpen size={14} className="text-indigo-500 shrink-0" />
+                              <span>{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 mb-3">Temario</h3>
+                      <div className="space-y-2 mb-6">
+                        {selectedLesson.syllabus.map(item => (
+                          <div key={item} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+                            <BookOpen size={14} className="text-indigo-500 shrink-0" />
+                            <span>{item}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
 
-                  <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 mb-3">Explicacion por subtema</h3>
-                  <div className="space-y-4 mb-6">
-                    {(selectedLessonDoc?.topicDetails || []).map(detail => (
-                      <div key={detail.label} className="rounded-2xl border border-slate-900/20 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/60">
-                        <p className="text-sm font-black text-slate-800 dark:text-slate-100">{detail.label}</p>
-                        <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">{detail.explanation}</p>
-                        <p className="text-sm text-indigo-600 dark:text-indigo-300 mt-2">Ejemplo: {detail.example}</p>
+                      <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 mb-3">Explicacion por subtema</h3>
+                      <div className="space-y-4 mb-6">
+                        {(selectedLessonDoc?.topicDetails || []).map(detail => (
+                          <div key={detail.label} className="rounded-2xl border border-slate-900/20 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/60">
+                            <p className="text-sm font-black text-slate-800 dark:text-slate-100">{detail.label}</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">{detail.explanation}</p>
+                            <p className="text-sm text-indigo-600 dark:text-indigo-300 mt-2">Ejemplo: {detail.example}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
 
-                  <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 mb-3">Reglas clave con correcciones</h3>
-                  <div className="space-y-4 mb-6">
-                    {(selectedLessonDoc?.rules || []).map(rule => (
-                      <div key={rule.label} className="rounded-2xl border border-slate-900/20 dark:border-slate-700 p-4 bg-white dark:bg-slate-900/40">
-                        <p className="text-sm font-black text-slate-900 dark:text-slate-100">{rule.label}</p>
-                        <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">{rule.rule}</p>
-                        <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-2">Correcto: {rule.correct}</p>
-                        <p className="text-sm text-rose-700 dark:text-rose-300 mt-1">Incorrecto: {rule.incorrect}</p>
-                        <p className="text-sm text-indigo-600 dark:text-indigo-300 mt-1">Correccion: {rule.fix}</p>
+                      <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 mb-3">Reglas clave con correcciones</h3>
+                      <div className="space-y-4 mb-6">
+                        {(selectedLessonDoc?.rules || []).map(rule => (
+                          <div key={rule.label} className="rounded-2xl border border-slate-900/20 dark:border-slate-700 p-4 bg-white dark:bg-slate-900/40">
+                            <p className="text-sm font-black text-slate-900 dark:text-slate-100">{rule.label}</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">{rule.rule}</p>
+                            <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-2">Correcto: {rule.correct}</p>
+                            <p className="text-sm text-rose-700 dark:text-rose-300 mt-1">Incorrecto: {rule.incorrect}</p>
+                            <p className="text-sm text-indigo-600 dark:text-indigo-300 mt-1">Correccion: {rule.fix}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
 
-                  <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 mb-3">Mini practica guiada</h3>
-                  <div className="space-y-3 mb-6">
-                    {(selectedLessonDoc?.practice || []).map((exercise, index) => (
-                      <div
-                        key={`${exercise.prompt}-${index}`}
-                        className="rounded-2xl border border-dashed border-slate-900/30 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/50"
-                      >
-                        <p className="text-sm text-slate-700 dark:text-slate-200">
-                          <span className="font-black">Ejercicio: </span>
-                          {exercise.prompt}
-                        </p>
-                        <p className="text-sm text-indigo-600 dark:text-indigo-300 mt-2">
-                          <span className="font-black">Respuesta modelo: </span>
-                          {exercise.sampleAnswer}
-                        </p>
+                      <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 mb-3">Mini practica guiada</h3>
+                      <div className="space-y-3 mb-6">
+                        {(selectedLessonDoc?.practice || []).map((exercise, index) => (
+                          <div
+                            key={`${exercise.prompt}-${index}`}
+                            className="rounded-2xl border border-dashed border-slate-900/30 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/50"
+                          >
+                            <p className="text-sm text-slate-700 dark:text-slate-200">
+                              <span className="font-black">Ejercicio: </span>
+                              {exercise.prompt}
+                            </p>
+                            <p className="text-sm text-indigo-600 dark:text-indigo-300 mt-2">
+                              <span className="font-black">Respuesta modelo: </span>
+                              {exercise.sampleAnswer}
+                            </p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
 
-                  <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 mb-3">Tips de estudio</h3>
-                  <div className="space-y-2">
-                    {(selectedLessonDoc?.tips || []).map(tip => (
-                      <p key={tip} className="text-sm text-slate-700 dark:text-slate-300">
-                        • {tip}
-                      </p>
-                    ))}
-                  </div>
+                      <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 mb-3">Tips de estudio</h3>
+                      <div className="space-y-2">
+                        {(selectedLessonDoc?.tips || []).map(tip => (
+                          <p key={tip} className="text-sm text-slate-700 dark:text-slate-300">
+                            • {tip}
+                          </p>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </>
               ) : null}
             </article>
 
-            <aside className="lg:col-span-4 rounded-[24px] sm:rounded-[28px] border border-slate-900/20 dark:border-slate-700 bg-white dark:bg-slate-800/80 p-4 sm:p-6 flex flex-col min-h-[520px] lg:min-h-[650px]">
+            <aside className={`lg:col-span-4 rounded-[24px] sm:rounded-[28px] border border-slate-900/20 dark:border-slate-700 bg-white dark:bg-slate-800/80 p-4 sm:p-6 flex-col min-h-[520px] lg:min-h-[650px] ${showMobileLessonDetail ? 'flex' : 'hidden lg:flex'}`}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-black text-sm uppercase tracking-[0.2em] text-slate-500">Chatbot de clase</h2>
                 {userPlan !== 'premium' ? (
@@ -784,10 +646,28 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
                 Pregunta dudas del tema actual y recibe explicaciones guiadas.
               </p>
 
+              <div className="mb-4">
+                <p className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400 mb-2">
+                  Sugerencias
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {quickSuggestions.map(suggestion => (
+                    <button
+                      key={suggestion}
+                      onClick={() => handleAskLessonAssistant(suggestion)}
+                      disabled={userPlan !== 'premium' || loadingAssistant || !selectedLesson}
+                      className="px-3 py-2 rounded-full text-xs bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 disabled:opacity-50"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex-grow rounded-2xl bg-slate-50 dark:bg-slate-900/70 border border-slate-900/20 dark:border-slate-700 p-4 space-y-3 overflow-y-auto min-h-[300px] sm:min-h-[420px]">
                 {(selectedLesson && lessonChats[selectedLesson.id]?.length
                   ? lessonChats[selectedLesson.id]
-                  : [{ role: 'assistant' as const, text: 'Estoy listo para ayudarte con esta clase. Puedes preguntar reglas, ejemplos y ejercicios.' }]
+                  : [{ role: 'assistant' as const, text: 'I am ready to help you with this lesson. Ask for rules, examples, or exercises.' }]
                 ).map((message, index) => (
                   <div
                     key={`${message.role}-${index}`}
@@ -807,12 +687,12 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
                   value={lessonQuestion}
                   onChange={event => setLessonQuestion(event.target.value)}
                   onKeyDown={event => event.key === 'Enter' && !loadingAssistant && handleAskLessonAssistant()}
-                  placeholder={userPlan === 'premium' ? 'Pregunta algo de esta clase...' : 'Disponible en premium'}
+                  placeholder={userPlan === 'premium' ? 'Ask something about this lesson...' : 'Available in premium'}
                   disabled={userPlan !== 'premium' || loadingAssistant || !selectedLesson}
                   className="flex-grow rounded-2xl px-4 py-3 text-sm bg-slate-100 dark:bg-slate-900/60 border border-slate-900/20 dark:border-slate-700 text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-500 disabled:opacity-60"
                 />
                 <button
-                  onClick={handleAskLessonAssistant}
+                  onClick={() => handleAskLessonAssistant()}
                   disabled={userPlan !== 'premium' || loadingAssistant || !selectedLesson || !lessonQuestion.trim()}
                   className="px-4 rounded-2xl bg-indigo-600 text-white disabled:opacity-50"
                 >

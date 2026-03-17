@@ -1,20 +1,13 @@
 'use client';
 
-import { AlertCircle, ArrowRight, BookOpen, Loader2, Lock, PhoneCall, TrendingUp } from 'lucide-react';
+import { ArrowRight, BookOpen, ChevronDown, ChevronUp, Loader2, Lock, MessageSquare, PhoneCall, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Navbar from '../Navbar';
-import type { UserPlan, View } from '@/types/app';
+import type { InterviewScenarioId, UserPlan, View } from '@/types/app';
 
 interface DashboardViewProps {
   userPlan: UserPlan;
   onNavigate: (view: View) => void;
-}
-
-interface DashboardError {
-  id: string;
-  label: string;
-  count: number;
-  latestFeedback: string;
 }
 
 function AccessCard({
@@ -64,81 +57,6 @@ function AccessCard({
   );
 }
 
-function ErrorsCard({
-  errors,
-  loading,
-  page,
-  totalPages,
-  onPageChange,
-}: {
-  errors: DashboardError[];
-  loading: boolean;
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) {
-  const getSeverityColor = (count: number) => (count > 3 ? 'red' : 'indigo');
-
-  return (
-    <div className="bg-white dark:bg-slate-800/80 p-4 sm:p-6 rounded-[24px] sm:rounded-[32px] border border-slate-900/20 dark:border-slate-700/50 shadow-sm transition-colors duration-300">
-      <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 mb-6">
-        <h3 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 text-sm">
-          <AlertCircle size={16} className="text-indigo-500" /> Errores recurrentes
-        </h3>
-        <span className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400">
-          Pagina {page} de {Math.max(totalPages, 1)}
-        </span>
-      </div>
-
-      <p className="text-xs text-slate-400 mb-5">
-        Solo se guardan correcciones reales de tu ingles. El feedback positivo ya no se mezcla con tus errores.
-      </p>
-
-      {loading ? (
-        <div className="flex justify-center py-10"><Loader2 className="animate-spin text-indigo-500" /></div>
-      ) : errors.length === 0 ? (
-        <p className="text-sm text-slate-400 text-center py-6">Aun no hay errores registrados. Cuando la IA detecte una correccion real, aparecera aqui.</p>
-      ) : (
-        <div className="space-y-3">
-          {errors.map((e) => (
-            <div
-              key={e.id}
-              className={`p-4 rounded-2xl border ${
-                getSeverityColor(e.count) === 'red'
-                  ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20'
-                  : 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20'
-              }`}
-            >
-              <div className="flex justify-between items-center gap-4">
-                <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{e.label}</span>
-                <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-300">{e.count} veces</span>
-              </div>
-              <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">{e.latestFeedback}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="flex items-center justify-between gap-3 mt-6">
-        <button
-          onClick={() => onPageChange(page - 1)}
-          disabled={page <= 1 || loading}
-          className="px-4 py-3 rounded-2xl bg-slate-100 dark:bg-slate-700/50 text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-200 disabled:opacity-40"
-        >
-          Anterior
-        </button>
-        <button
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= totalPages || loading}
-          className="px-4 py-3 rounded-2xl bg-slate-100 dark:bg-slate-700/50 text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-200 disabled:opacity-40"
-        >
-          Siguiente
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function StreakCard({ streak, loading }: { streak: number; loading: boolean }) {
   return (
     <div className="bg-white dark:bg-slate-800/80 p-4 sm:p-6 rounded-[24px] sm:rounded-[32px] border border-slate-900/20 dark:border-slate-700/50 shadow-sm text-center transition-colors duration-300">
@@ -161,31 +79,116 @@ function StreakCard({ streak, loading }: { streak: number; loading: boolean }) {
   );
 }
 
+const SCENARIO_LABELS: Record<InterviewScenarioId, string> = {
+  'job-interview': 'Entrevista de trabajo',
+  'call-center-opening': 'Apertura de llamada',
+  'call-center-objections': 'Manejo de objeciones',
+  'call-center-escalations': 'Escalaciones',
+  'call-center-billing-dispute': 'Disputa de cobro',
+  'call-center-refund-request': 'Solicitud de reembolso',
+  'call-center-technical-support': 'Soporte tecnico',
+  'call-center-cancellation': 'Cancelacion de servicio',
+  'call-center-account-locked': 'Cuenta bloqueada',
+  'call-center-service-outage': 'Interrupcion de servicio',
+  'call-center-upsell': 'Oferta de upgrade',
+  'call-center-duplicate-charge': 'Cobro duplicado',
+  'call-center-delivery-tracking': 'Seguimiento de entrega',
+  'call-center-complaint-agent': 'Queja sobre agente',
+  'call-center-appointment': 'Agendar visita tecnica',
+  'call-center-plan-downgrade': 'Cambio a plan menor',
+  'call-center-callback-followup': 'Seguimiento de caso previo',
+  'call-center-new-customer': 'Cliente nuevo',
+  'call-center-language-barrier': 'Barrera de idioma',
+};
+
+type FeedbackEntry = {
+  id: string;
+  scenarioId: string;
+  finalFeedback: string;
+  completedAt: string;
+};
+
+function FeedbackHistorySection({ entries, loading }: { entries: FeedbackEntry[]; loading: boolean }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-6">
+        <Loader2 className="animate-spin text-indigo-500" size={20} />
+      </div>
+    );
+  }
+
+  if (!entries.length) {
+    return (
+      <p className="text-sm text-slate-400 dark:text-slate-500 py-4">
+        Aun no tienes rondas completadas. Practica un escenario para ver tu feedback aqui.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {entries.map(entry => {
+        const isOpen = expandedId === entry.id;
+        const label = SCENARIO_LABELS[entry.scenarioId as InterviewScenarioId] ?? entry.scenarioId;
+        const date = new Date(entry.completedAt).toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
+        return (
+          <div
+            key={entry.id}
+            className="rounded-2xl border border-slate-900/10 dark:border-slate-700 bg-white dark:bg-slate-800/60 overflow-hidden"
+          >
+            <button
+              onClick={() => setExpandedId(isOpen ? null : entry.id)}
+              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <MessageSquare size={15} className="shrink-0 text-indigo-400" />
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{label}</span>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">{date}</span>
+              </div>
+              {isOpen ? (
+                <ChevronUp size={15} className="shrink-0 text-slate-400" />
+              ) : (
+                <ChevronDown size={15} className="shrink-0 text-slate-400" />
+              )}
+            </button>
+            {isOpen ? (
+              <div className="px-4 pb-4 pt-1 border-t border-slate-100 dark:border-slate-700">
+                <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                  {entry.finalFeedback}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function DashboardView({ userPlan, onNavigate }: DashboardViewProps) {
-  const [data, setData] = useState({
-    streak: 0,
-    errors: [] as DashboardError[],
-    pagination: { page: 1, totalPages: 1 },
-  });
+  const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
+  const [feedbackHistory, setFeedbackHistory] = useState<FeedbackEntry[]>([]);
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/dashboard?page=${page}&pageSize=5`)
+    fetch('/api/dashboard')
       .then(r => r.json())
       .then(d => {
         if (!d.error) {
-          setData({
-            streak: d.streak || 0,
-            errors: d.errors || [],
-            pagination: d.pagination || { page: 1, totalPages: 1 },
-          });
+          setStreak(d.streak || 0);
+          setFeedbackHistory(d.feedbackHistory || []);
         }
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [page]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] dark:bg-slate-950 transition-colors duration-300">
@@ -196,7 +199,7 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
           <div className="lg:col-span-2 bg-gradient-to-br from-slate-900 to-indigo-900 text-white p-5 sm:p-8 rounded-[28px] sm:rounded-[36px]">
             <p className="text-xs font-black uppercase tracking-[0.3em] text-indigo-200 mb-4">HablaSpeak dashboard</p>
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight mb-4">
-              Tu ingles, tu aliado para conseguir el trabajo sonado en Call Center
+              Tu ingles, tu aliado para conseguir el trabajo soñado en Call Center
             </h2>
             <p className="text-indigo-100/80 max-w-2xl">
               {userPlan === 'premium'
@@ -205,7 +208,7 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
             </p>
           </div>
 
-          <StreakCard streak={data.streak} loading={loading} />
+          <StreakCard streak={streak} loading={loading} />
         </section>
 
         <section className="grid md:grid-cols-3 gap-6">
@@ -240,6 +243,21 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
           />
         </section>
 
+        {userPlan === 'premium' ? (
+          <section className="rounded-[24px] sm:rounded-[32px] border border-slate-900/20 dark:border-slate-700 bg-white dark:bg-slate-800/80 p-5 sm:p-7 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <MessageSquare size={18} className="text-indigo-500" />
+              <h3 className="text-base font-black text-slate-900 dark:text-white">Historial de feedback</h3>
+              {feedbackHistory.length > 0 ? (
+                <span className="ml-auto text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  {feedbackHistory.length} ronda{feedbackHistory.length !== 1 ? 's' : ''}
+                </span>
+              ) : null}
+            </div>
+            <FeedbackHistorySection entries={feedbackHistory} loading={loading} />
+          </section>
+        ) : null}
+
         {userPlan !== 'premium' ? (
           <section className="grid md:grid-cols-2 gap-6">
             <div className="rounded-[24px] sm:rounded-[32px] p-5 sm:p-7 border border-slate-900/20 dark:border-slate-700 bg-white dark:bg-slate-800/80 shadow-sm">
@@ -268,7 +286,7 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
               <ul className="space-y-2 text-sm text-indigo-50">
                 <li>Catalogo completo de ingles general y call center</li>
                 <li>Chatbot IA por tema dentro de cada clase</li>
-                <li>Dashboard de errores recurrentes con enfoque de mejora</li>
+                <li>Feedback personalizado de IA en cada practica</li>
               </ul>
               <button
                 onClick={() => onNavigate('pricing')}
@@ -280,13 +298,6 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
           </section>
         ) : null}
 
-        <ErrorsCard
-          errors={data.errors}
-          loading={loading}
-          page={data.pagination.page}
-          totalPages={data.pagination.totalPages}
-          onPageChange={nextPage => setPage(nextPage)}
-        />
       </main>
     </div>
   );

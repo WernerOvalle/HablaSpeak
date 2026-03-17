@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, Crown, Headphones, Lock, PhoneCall, ShieldAlert } from 'lucide-react';
+import { ChevronRight, Crown, Headphones, Lock, PhoneCall, ShieldAlert, CreditCard, RotateCcw, Wifi, XCircle, KeyRound, AlertTriangle, TrendingUp, Receipt, Package, MessageSquareWarning, CalendarClock, ArrowDownCircle, Clock, UserPlus, Globe } from 'lucide-react';
 import Navbar from '../Navbar';
 import type { InterviewScenarioId, UserPlan, View } from '@/types/app';
 
@@ -109,6 +109,111 @@ export default function ScenariosView({ userPlan, onNavigate, onStartInterview }
             locked={!isPremium}
             icon={<Crown size={20} />}
             onClick={() => (isPremium ? onStartInterview('call-center-escalations') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: disputa de cobro"
+            subtitle="Un cliente no reconoce un cargo en su factura y exige explicacion."
+            locked={!isPremium}
+            icon={<CreditCard size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-billing-dispute') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: solicitud de reembolso"
+            subtitle="Practica procesar o gestionar una solicitud de devolucion."
+            locked={!isPremium}
+            icon={<RotateCcw size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-refund-request') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: soporte tecnico"
+            subtitle="Guia paso a paso a un cliente con un problema tecnico urgente."
+            locked={!isPremium}
+            icon={<Wifi size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-technical-support') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: cancelacion de servicio"
+            subtitle="Maneja una baja e intenta retener al cliente con argumentos claros."
+            locked={!isPremium}
+            icon={<XCircle size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-cancellation') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: cuenta bloqueada"
+            subtitle="Verifica identidad y ayuda a recuperar acceso a una cuenta bloqueada."
+            locked={!isPremium}
+            icon={<KeyRound size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-account-locked') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: interrupcion de servicio"
+            subtitle="Comunica una falla activa y maneja la frustracion del cliente."
+            locked={!isPremium}
+            icon={<AlertTriangle size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-service-outage') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: oferta de upgrade"
+            subtitle="Presenta un plan superior a un cliente insatisfecho con su plan actual."
+            locked={!isPremium}
+            icon={<TrendingUp size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-upsell') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: cobro duplicado"
+            subtitle="Resuelve un caso de doble cargo y explica el proceso de devolucion."
+            locked={!isPremium}
+            icon={<Receipt size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-duplicate-charge') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: seguimiento de entrega"
+            subtitle="Localiza un pedido retrasado o perdido y mantiene informado al cliente."
+            locked={!isPremium}
+            icon={<Package size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-delivery-tracking') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: queja sobre un agente"
+            subtitle="Recibe y gestiona una queja formal sobre la atencion de un agente anterior."
+            locked={!isPremium}
+            icon={<MessageSquareWarning size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-complaint-agent') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: agendar visita tecnica"
+            subtitle="Coordina o reprograma una cita con un tecnico de forma profesional."
+            locked={!isPremium}
+            icon={<CalendarClock size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-appointment') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: cambio a plan menor"
+            subtitle="Gestiona la solicitud de downgrade y retiene valor para el cliente."
+            locked={!isPremium}
+            icon={<ArrowDownCircle size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-plan-downgrade') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: seguimiento de caso previo"
+            subtitle="Retoma un caso sin resolver y comunica el estado actual con claridad."
+            locked={!isPremium}
+            icon={<Clock size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-callback-followup') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: cliente nuevo"
+            subtitle="Orienta a un cliente recien registrado que no sabe como usar el servicio."
+            locked={!isPremium}
+            icon={<UserPlus size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-new-customer') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Call Center: barrera de idioma"
+            subtitle="Practica con un cliente que tiene dificultad comunicandose en ingles."
+            locked={!isPremium}
+            icon={<Globe size={20} />}
+            onClick={() => (isPremium ? onStartInterview('call-center-language-barrier') : onNavigate('pricing'))}
           />
         </div>
       </div>

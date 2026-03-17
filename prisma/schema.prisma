@@ -23,6 +23,11 @@ enum LessonCategory {
   CALL_CENTER
 }
 
+enum PracticeSessionStatus {
+  ACTIVE
+  COMPLETED
+}
+
 model User {
   id             String           @id @default(cuid())
   email          String           @unique
@@ -31,6 +36,8 @@ model User {
   plan           Plan             @default(FREE)
   errors         ErrorRecord[]
   lessonQuestions LessonQuestion[]
+  dailyAiUsages  DailyAiUsage[]
+  practiceSessions InterviewPracticeSession[]
   streakCurrent  Int              @default(0)
   lastLoginAt    DateTime         @default(now())
   createdAt      DateTime         @default(now())
@@ -78,4 +85,35 @@ model LessonQuestion {
   createdAt  DateTime @default(now())
 
   @@index([lessonId, userId, createdAt])
+}
+
+model DailyAiUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  dayKey    String
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, dayKey])
+  @@index([dayKey])
+}
+
+model InterviewPracticeSession {
+  id              String                @id @default(cuid())
+  userId          String
+  user            User                  @relation(fields: [userId], references: [id])
+  scenarioId      String
+  status          PracticeSessionStatus @default(ACTIVE)
+  aiResponsesCount Int                  @default(0)
+  errorTally      Json
+  latestCorrections Json
+  finalFeedback   String?
+  completedAt     DateTime?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([userId, scenarioId, status])
+  @@index([userId, status, updatedAt])
 }

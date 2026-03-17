@@ -17,7 +17,7 @@ function normalizeTranscriptionLanguage(language?: string) {
   return undefined;
 }
 
-export async function createGroqChatCompletion(messages: GroqMessage[]) {
+export async function createGroqChatCompletion(messages: GroqMessage[], options?: { jsonMode?: boolean }) {
   const apiKey = process.env.GROQ_API_KEY;
   const model = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
 
@@ -34,6 +34,7 @@ export async function createGroqChatCompletion(messages: GroqMessage[]) {
     body: JSON.stringify({
       model,
       temperature: 0.4,
+      ...(options?.jsonMode ? { response_format: { type: 'json_object' } } : {}),
       messages,
     }),
   });

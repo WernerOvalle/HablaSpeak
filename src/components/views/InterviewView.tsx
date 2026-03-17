@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AIStatusBadge,
   ChatBubble,
@@ -15,13 +15,18 @@ interface InterviewViewProps {
   scenario: InterviewScenario;
 }
 
+
 export default function InterviewView({ onExit, scenario }: InterviewViewProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isLoadingIA, setIsLoadingIA] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showRoundModal, setShowRoundModal] = useState(false);
+  const [roundFeedback, setRoundFeedback] = useState('');
   const [userInput, setUserInput] = useState('');
   const [showSendHint, setShowSendHint] = useState(false);
+  const [isFirstMessage, setIsFirstMessage] = useState(true);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     { role: 'ai', text: scenario.initialMessage },
   ]);
@@ -37,6 +42,12 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
   useEffect(() => {
     const initialMessage = { role: 'ai' as const, text: scenario.initialMessage };
     setChatHistory([initialMessage]);
+    setShowConfetti(false);
+    setShowRoundModal(false);
+    setRoundFeedback('');
+    setUserInput('');
+    setShowSendHint(false);
+    setIsFirstMessage(true);
     speakWithBrowser(initialMessage.text);
   }, [scenario]);
 
@@ -48,6 +59,19 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
       stopMediaStream();
     };
   }, []);
+
+  const confettiPieces = useMemo(
+    () =>
+      Array.from({ length: 48 }).map((_, index) => ({
+        id: index,
+        left: Math.random() * 100,
+        delay: Math.random() * 0.5,
+        duration: 2.4 + Math.random() * 1.8,
+        drift: (Math.random() - 0.5) * 80,
+        color: ['#F59E0B', '#6366F1', '#10B981', '#EC4899', '#38BDF8'][index % 5],
+      })),
+    []
+  );
 
   const speakWithBrowser = (text: string) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -165,7 +189,7 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
   };
 
   const handleSendMessage = async () => {
-    if (!userInput.trim()) return;
+    if (!userInput.trim() || isLoadingIA) return;
 
     const textToSend = userInput;
     setChatHistory(prev => [...prev, { role: 'user', text: textToSend }]);
@@ -174,6 +198,9 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
     setIsLoadingIA(true);
 
     try {
+      const freshSession = isFirstMessage;
+      if (isFirstMessage) setIsFirstMessage(false);
+
       const response = await fetch('/api/interview', {
         method: 'POST',
         headers: {
@@ -181,8 +208,10 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
         },
         body: JSON.stringify({
           message: textToSend,
+          scenarioId: scenario.id,
           scenarioTitle: scenario.title,
           scenarioDescription: scenario.description,
+          freshSession,
         }),
       });
       const data = await response.json();
@@ -194,6 +223,17 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
       const aiResponse = data.displayText || 'No se recibio respuesta valida';
       setChatHistory(prev => [...prev, { role: 'ai', text: aiResponse }]);
       speakWithBrowser(aiResponse);
+
+      if (data.practiceCompleted) {
+        setRoundFeedback(
+          typeof data.finalFeedback === 'string' && data.finalFeedback.trim()
+            ? data.finalFeedback
+            : 'Resumen de la ronda listo.'
+        );
+        setShowRoundModal(true);
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 4200);
+      }
     } catch (e) {
       setChatHistory(prev => [
         ...prev,
@@ -213,8 +253,40 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
     onExit();
   };
 
+  const handleAcceptRoundFeedback = () => {
+    setShowRoundModal(false);
+    handleExit();
+  };
+
   return (
-    <div className="min-h-screen bg-[#0F172A] text-white flex flex-col p-3 sm:p-6">
+    <div className="min-h-screen bg-[#0F172A] text-white flex flex-col p-3 sm:p-6 relative overflow-hidden">
+      <style>{`
+        @keyframes confettiDrop {
+          0% { transform: translate3d(0, -12vh, 0) rotate(0deg); opacity: 0; }
+          10% { opacity: 1; }
+          100% { transform: translate3d(var(--drift), 115vh, 0) rotate(540deg); opacity: 0; }
+        }
+      `}</style>
+      {showConfetti ? (
+        <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+          {confettiPieces.map(piece => (
+            <span
+              key={piece.id}
+              className="absolute top-0 block w-2 h-4 rounded-sm"
+              style={{
+                left: `${piece.left}%`,
+                backgroundColor: piece.color,
+                animationName: 'confettiDrop',
+                animationDuration: `${piece.duration}s`,
+                animationTimingFunction: 'linear',
+                animationDelay: `${piece.delay}s`,
+                animationFillMode: 'both',
+                ['--drift' as string]: `${piece.drift}px`,
+              }}
+            />
+          ))}
+        </div>
+      ) : null}
       <div className="max-w-2xl mx-auto w-full flex-grow flex flex-col">
         <header className="flex justify-between items-center mb-5 sm:mb-8">
           <button
@@ -257,6 +329,25 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
           onSend={handleSendMessage}
         />
       </div>
+      {showRoundModal ? (
+        <div className="absolute inset-0 z-30 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-xl rounded-3xl border border-indigo-400/30 bg-slate-900 p-6 sm:p-7 shadow-2xl">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-black text-indigo-300 mb-3">
+              Feedback de tu ronda
+            </p>
+            <h3 className="text-xl font-black text-white mb-3">
+              Completaste 10 interacciones
+            </h3>
+            <p className="text-sm text-slate-200 whitespace-pre-wrap">{roundFeedback}</p>
+            <button
+              onClick={handleAcceptRoundFeedback}
+              className="mt-6 w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-[0.15em] text-xs"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
