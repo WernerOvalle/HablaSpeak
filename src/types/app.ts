@@ -5,6 +5,7 @@ export type View =
   | 'dashboard'
   | 'classes-general'
   | 'classes-callcenter'
+  | 'classes-cc-interview'
   | 'scenarios'
   | 'interview'
   | 'pricing';
@@ -30,7 +31,7 @@ export type InterviewScenarioId =
   | 'call-center-language-barrier';
 
 export type LessonLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-export type LessonCategory = 'GENERAL' | 'CALL_CENTER';
+export type LessonCategory = 'GENERAL' | 'CALL_CENTER' | 'CC_INTERVIEW';
 
 export interface LessonSummary {
   id: string;

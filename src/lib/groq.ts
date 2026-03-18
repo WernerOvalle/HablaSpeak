@@ -17,42 +17,62 @@ function normalizeTranscriptionLanguage(language?: string) {
   return undefined;
 }
 
+async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export async function createGroqChatCompletion(messages: GroqMessage[], options?: { jsonMode?: boolean }) {
   const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+  const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
   if (!apiKey) {
     throw new Error('GROQ_API_KEY no configurada');
   }
 
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.4,
-      ...(options?.jsonMode ? { response_format: { type: 'json_object' } } : {}),
-      messages,
-    }),
+  const body = JSON.stringify({
+    model,
+    temperature: 0.4,
+    ...(options?.jsonMode ? { response_format: { type: 'json_object' } } : {}),
+    messages,
   });
 
-  const data = await response.json();
+  const MAX_RETRIES = 3;
+  const RETRY_DELAYS = [2000, 5000, 10000];
 
-  if (!response.ok) {
-    const message = data?.error?.message || 'Error desconocido llamando a Groq';
-    throw new Error(message);
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body,
+    });
+
+    if (response.status === 429 && attempt < MAX_RETRIES) {
+      const retryAfter = response.headers.get('retry-after');
+      const waitMs = retryAfter ? parseInt(retryAfter) * 1000 : RETRY_DELAYS[attempt];
+      await sleep(waitMs);
+      continue;
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const message = data?.error?.message || 'Error desconocido llamando a Groq';
+      throw new Error(message);
+    }
+
+    const content = data?.choices?.[0]?.message?.content;
+
+    if (!content || typeof content !== 'string') {
+      throw new Error('Respuesta inválida de Groq');
+    }
+
+    return content;
   }
 
-  const content = data?.choices?.[0]?.message?.content;
-
-  if (!content || typeof content !== 'string') {
-    throw new Error('Respuesta inválida de Groq');
-  }
-
-  return content;
+  throw new Error('Rate limit de Groq: demasiadas solicitudes, intenta en unos segundos.');
 }
 
 export async function createGroqTranscription(audioFile: File, language?: string) {

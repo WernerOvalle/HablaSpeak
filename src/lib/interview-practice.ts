@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
 
-export const INTERVIEW_BLOCK_SIZE = 10;
+export const INTERVIEW_BLOCK_SIZE = parseInt(process.env.INTERVIEW_BLOCK_SIZE || '8', 10);
 
 export type PracticeTurn = {
   userMessage: string;

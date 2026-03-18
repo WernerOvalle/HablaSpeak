@@ -6,9 +6,10 @@ import Navbar from '../Navbar';
 import type { LessonSummary, UserPlan, View } from '@/types/app';
 import { GENERAL_CURRICULUM } from '@/lib/general-curriculum';
 import { CALLCENTER_CURRICULUM } from '@/lib/callcenter-curriculum';
+import { CC_INTERVIEW_CURRICULUM } from '@/lib/cc-interview-curriculum';
 
 interface ClassesViewProps {
-  moduleType: 'GENERAL' | 'CALL_CENTER';
+  moduleType: 'GENERAL' | 'CALL_CENTER' | 'CC_INTERVIEW';
   userPlan: UserPlan;
   onNavigate: (view: View) => void;
 }
@@ -41,7 +42,9 @@ function levelLabel(level: LessonSummary['level']) {
 }
 
 function categoryLabel(category: LessonSummary['category']) {
-  return category === 'CALL_CENTER' ? 'Ingles para Call Center' : 'Ingles General';
+  if (category === 'CALL_CENTER') return 'Ingles para Call Center';
+  if (category === 'CC_INTERVIEW') return 'Entrevistas Call Center';
+  return 'Ingles General';
 }
 
 function buildFallbackLessonDoc(lesson: LessonSummary): LessonDoc {
@@ -151,6 +154,7 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
   const lessonDocs = useMemo<Record<string, LessonDoc>>(
     () => ({
       ...CALLCENTER_CURRICULUM,
+      ...CC_INTERVIEW_CURRICULUM,
       'beginner-greetings': {
         intro:
           'Aprendes la base del idioma con estructura correcta: sujeto + verbo to be + complemento. Esta clase te permite presentarte sin errores comunes.',
@@ -366,7 +370,7 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
   }, [selectedLesson]);
 
   const canPreviewLesson = (lesson: LessonSummary) =>
-    lesson.category === 'GENERAL' && lesson.level === 'BEGINNER';
+    lesson.category === 'GENERAL' && lesson.level === 'BEGINNER' && !lesson.isPremium;
 
   const canOpenLesson = (lesson: LessonSummary) =>
     userPlan === 'premium' || canPreviewLesson(lesson);
@@ -374,7 +378,9 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
   const quickSuggestions =
     moduleType === 'GENERAL'
       ? ['Give me examples for this exercise', 'Create a quiz for this topic', 'Summarize this lesson']
-      : ['Give me examples for this call center scenario', 'Create a short quiz for this topic', 'Summarize this as a call script'];
+      : moduleType === 'CALL_CENTER'
+        ? ['Give me examples for this call center scenario', 'Create a short quiz for this topic', 'Summarize this as a call script']
+        : ['Give me sample answers for this interview question', 'Create a practice quiz for this topic', 'Summarize the key points for my interview'];
 
   const handleAskLessonAssistant = async (suggestedQuestion?: string) => {
     if (!selectedLesson) {
@@ -476,12 +482,18 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
           <div>
             <p className="text-xs font-black uppercase tracking-[0.25em] text-indigo-500 mb-3">Academia HablaSpeak</p>
             <h1 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white">
-              {moduleType === 'GENERAL' ? 'Modulo: Ingles General' : 'Modulo: Ingles para Call Center'}
+              {moduleType === 'GENERAL'
+                ? 'Modulo: Ingles General'
+                : moduleType === 'CALL_CENTER'
+                  ? 'Modulo: Ingles para Call Center'
+                  : 'Modulo: Entrevistas Call Center'}
             </h1>
             <p className="text-slate-500 dark:text-slate-400 mt-3 max-w-3xl">
               {moduleType === 'GENERAL'
                 ? 'Aqui encuentras gramatica, verbos, pronombres y tiempos con ejemplos claros.'
-                : 'Aqui encuentras guias practicas para apertura, objeciones y escalaciones en call center.'}
+                : moduleType === 'CALL_CENTER'
+                  ? 'Aqui encuentras guias practicas para apertura, objeciones y escalaciones en call center.'
+                  : 'Prepara tu proceso de seleccion con guias especificas para entrevistas de call center en ingles.'}
             </p>
           </div>
 
@@ -502,7 +514,11 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
             <aside className={`lg:col-span-3 space-y-4 ${showMobileLessonDetail ? 'hidden lg:block' : 'block'}`}>
               <div className="rounded-2xl p-4 bg-white dark:bg-slate-800/80 border border-slate-900/20 dark:border-slate-700">
                 <h2 className="font-black text-sm uppercase tracking-[0.2em] text-slate-500 mb-3">
-                  {moduleType === 'GENERAL' ? 'Lecciones generales' : 'Lecciones call center'}
+                  {moduleType === 'GENERAL'
+                    ? 'Lecciones generales'
+                    : moduleType === 'CALL_CENTER'
+                      ? 'Lecciones call center'
+                      : 'Lecciones de entrevista'}
                 </h2>
                 <div className="space-y-3">
                   {filteredLessons.map(renderLessonItem)}
@@ -687,7 +703,7 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
                   value={lessonQuestion}
                   onChange={event => setLessonQuestion(event.target.value)}
                   onKeyDown={event => event.key === 'Enter' && !loadingAssistant && handleAskLessonAssistant()}
-                  placeholder={userPlan === 'premium' ? 'Ask something about this lesson...' : 'Available in premium'}
+                  placeholder={userPlan === 'premium' ? 'Ask something about this lesson...' : ''/* DISABLED: era 'Available in premium' */}
                   disabled={userPlan !== 'premium' || loadingAssistant || !selectedLesson}
                   className="flex-grow rounded-2xl px-4 py-3 text-sm bg-slate-100 dark:bg-slate-900/60 border border-slate-900/20 dark:border-slate-700 text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-500 disabled:opacity-60"
                 />
@@ -700,6 +716,7 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
                 </button>
               </div>
 
+              {/* DISABLED: boton desbloquear chatbot deshabilitado hasta apertura publica
               {userPlan !== 'premium' ? (
                 <button
                   onClick={() => onNavigate('pricing')}
@@ -708,6 +725,7 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
                   Desbloquear chatbot IA
                 </button>
               ) : null}
+              */}
             </aside>
           </section>
         )}

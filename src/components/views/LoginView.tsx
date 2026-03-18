@@ -9,8 +9,8 @@ interface LoginViewProps {
 }
 
 export default function LoginView({ onLogin }: LoginViewProps) {
-  const [email, setEmail] = useState('premium@hablaspeak.com');
-  const [password, setPassword] = useState('Premium123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ export default function LoginView({ onLogin }: LoginViewProps) {
     });
 
     if (res?.error) {
-      setError('Credenciales inválidas o usuario no sembrado todavía');
+      setError('Correo o contraseña incorrectos. Verifica tus datos e intenta de nuevo.');
       setLoading(false);
     } else {
       onLogin();
@@ -135,6 +135,7 @@ export default function LoginView({ onLogin }: LoginViewProps) {
             {loading ? <Loader2 size={24} className="animate-spin" /> : mode === 'login' ? 'Entrar' : 'Crear cuenta'}
           </button>
 
+          {/* DISABLED: registro deshabilitado hasta apertura publica
           <button
             type="button"
             onClick={() => {
@@ -145,11 +146,14 @@ export default function LoginView({ onLogin }: LoginViewProps) {
           >
             {mode === 'login' ? 'No tengo cuenta, quiero registrarme' : 'Ya tengo cuenta, quiero iniciar sesión'}
           </button>
+          */}
 
+          {/* DISABLED: credenciales de prueba ocultas en produccion
           <div className="pt-3 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
             <p>Usuario premium de prueba: <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">premium@hablaspeak.com</code></p>
             <p>Contraseña inicial: <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">Premium123!</code></p>
           </div>
+          */}
         </div>
       </div>
     </div>

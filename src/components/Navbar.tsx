@@ -10,7 +10,7 @@ interface NavbarProps {
   onNavigate: (view: View) => void;
 }
 
-export default function Navbar({ userPlan, onNavigate }: NavbarProps) {
+export default function Navbar({ userPlan: _userPlan, onNavigate }: NavbarProps) {
   return (
     <nav className="flex justify-between items-center px-3 py-3 sm:p-4 bg-white/70 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-900/25 dark:border-slate-800 sticky top-0 z-50 transition-colors duration-300">
       {/* Logo */}
@@ -31,7 +31,7 @@ export default function Navbar({ userPlan, onNavigate }: NavbarProps) {
         {/* Dark Mode Toggle */}
         <DarkModeToggle />
 
-        {/* Upgrade / Plus Badge */}
+        {/* DISABLED: boton upgrade/pricing deshabilitado hasta apertura publica
         <button
           id="upgrade-btn"
           onClick={() => onNavigate('pricing')}
@@ -46,6 +46,7 @@ export default function Navbar({ userPlan, onNavigate }: NavbarProps) {
           <Crown size={13} />
           <span className="hidden sm:inline">{userPlan === 'premium' ? 'Premium Active' : 'Upgrade'}</span>
         </button>
+        */}
 
         {/* Logout */}
         <button

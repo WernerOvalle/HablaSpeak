@@ -172,7 +172,7 @@ export default function HablaSpeakApp() {
 
   const handleStartInterview = (nextScenarioId: InterviewScenarioId) => {
     if (userPlan !== 'premium') {
-      setView('pricing');
+      setView('dashboard'); // DISABLED: era 'pricing', deshabilitado hasta apertura publica
       return;
     }
     setScenarioId(nextScenarioId);
@@ -183,7 +183,8 @@ export default function HablaSpeakApp() {
     setView('login');
   };
 
-  const navigate = (v: View) => setView(v);
+  // DISABLED: pricing redirige a dashboard hasta apertura publica
+  const navigate = (v: View) => setView(v === 'pricing' ? 'dashboard' : v);
 
   if (status === 'loading') {
     return (
@@ -224,6 +225,14 @@ export default function HablaSpeakApp() {
         />
       )}
 
+      {status === 'authenticated' && view === 'classes-cc-interview' && (
+        <ClassesView
+          moduleType="CC_INTERVIEW"
+          userPlan={userPlan}
+          onNavigate={navigate}
+        />
+      )}
+
       {status === 'authenticated' && view === 'scenarios' && (
         <ScenariosView
           userPlan={userPlan}
@@ -239,6 +248,7 @@ export default function HablaSpeakApp() {
         />
       )}
 
+      {/* DISABLED: vista de pricing deshabilitada hasta apertura publica
       {status === 'authenticated' && view === 'pricing' && (
         <PricingView
           userPlan={userPlan}
@@ -246,6 +256,7 @@ export default function HablaSpeakApp() {
           onSubscribe={handleSubscribe}
         />
       )}
+      */}
     </ThemeProvider>
   );
 }

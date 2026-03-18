@@ -21,6 +21,7 @@ enum LessonLevel {
 enum LessonCategory {
   GENERAL
   CALL_CENTER
+  CC_INTERVIEW
 }
 
 enum PracticeSessionStatus {

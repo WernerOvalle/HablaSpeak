@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { INTERVIEW_BLOCK_SIZE } from '@/lib/interview-practice';
 import {
   AIStatusBadge,
   ChatBubble,
@@ -336,7 +337,7 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
               Feedback de tu ronda
             </p>
             <h3 className="text-xl font-black text-white mb-3">
-              Completaste 10 interacciones
+              Completaste {INTERVIEW_BLOCK_SIZE} interacciones
             </h3>
             <p className="text-sm text-slate-200 whitespace-pre-wrap">{roundFeedback}</p>
             <button

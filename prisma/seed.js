@@ -580,6 +580,159 @@ const lessons = [
       'Checklist de salida impecable',
     ],
   },
+  // ── CC Interview ─────────────────────────────────────────────────────────
+  {
+    slug: 'cci-self-introduction',
+    title: 'Self-Introduction for CC Jobs',
+    description: 'Presenta tu perfil con claridad y confianza en la primera pregunta de la entrevista.',
+    level: LessonLevel.BEGINNER,
+    category: LessonCategory.CC_INTERVIEW,
+    order: 1,
+    isPremium: true,
+    syllabus: [
+      'Estructura: nombre + experiencia + objetivo',
+      'Duracion ideal: 60-90 segundos',
+      'Frases de apertura profesional',
+      'Mencionar habilidades de idioma',
+      'Conectar tu perfil con el rol CC',
+      'Evitar informacion irrelevante',
+      'Tono confiado sin sonar memorizado',
+      'Practica de presentacion en voz alta',
+    ],
+  },
+  {
+    slug: 'cci-motivation',
+    title: 'Why Do You Want This Job?',
+    description: 'Responde la pregunta de motivacion con autenticidad y enfoque en el rol.',
+    level: LessonLevel.BEGINNER,
+    category: LessonCategory.CC_INTERVIEW,
+    order: 2,
+    isPremium: true,
+    syllabus: [
+      'Estructura: razon + habilidad + aporte',
+      'Evitar respuestas genericas',
+      'Conectar interes con la empresa',
+      'Mostrar conocimiento del rol CC',
+      'Frases de entusiasmo genuino',
+      'Practica con ejemplos reales',
+      'Respuesta de 45-60 segundos',
+      'Checklist de motivacion convincente',
+    ],
+  },
+  {
+    slug: 'cci-customer-mindset',
+    title: 'Customer Service Mindset & Empathy',
+    description: 'Demuestra orientacion al cliente y capacidad empatica en la entrevista.',
+    level: LessonLevel.BEGINNER,
+    category: LessonCategory.CC_INTERVIEW,
+    order: 3,
+    isPremium: true,
+    syllabus: [
+      'Que es orientacion al cliente',
+      'Frases de empatia en ingles',
+      'Ejemplo real de buena atencion',
+      'Diferencia entre empatia y simpatia',
+      'Como expresar paciencia',
+      'Vocabulario de servicio al cliente',
+      'Preguntas tipicas sobre actitud',
+      'Practica con mini-respuestas',
+    ],
+  },
+  {
+    slug: 'cci-stress-handling',
+    title: 'Handling Stress & Difficult Situations',
+    description: 'Responde preguntas sobre presion, clientes dificiles y situaciones de alta carga.',
+    level: LessonLevel.INTERMEDIATE,
+    category: LessonCategory.CC_INTERVIEW,
+    order: 4,
+    isPremium: true,
+    syllabus: [
+      'Preguntas tipicas sobre estres',
+      'Vocabulario de manejo de presion',
+      'Ejemplo real con cliente dificil',
+      'Estructura: situacion + accion + resultado',
+      'Frases para describir resolucion',
+      'Como mostrar estabilidad emocional',
+      'Evitar respuestas negativas',
+      'Role-play de situacion critica',
+    ],
+  },
+  {
+    slug: 'cci-english-fluency',
+    title: 'Demonstrating Your English Fluency',
+    description: 'Estrategias para mostrar tu nivel de ingles con claridad y naturalidad.',
+    level: LessonLevel.INTERMEDIATE,
+    category: LessonCategory.CC_INTERVIEW,
+    order: 5,
+    isPremium: true,
+    syllabus: [
+      'Ritmo y entonacion en entrevista',
+      'Como recuperarse de un error',
+      'Expresiones de precision verbal',
+      'Evitar muletillas en ingles',
+      'Confirmar que fuiste entendido',
+      'Pausas estrategicas al hablar',
+      'Vocabulario de profesionalismo',
+      'Practica de fluencia oral',
+    ],
+  },
+  {
+    slug: 'cci-star-method',
+    title: 'Situational Questions: The STAR Method',
+    description: 'Estructura respuestas situacionales con el metodo STAR para impresionar al entrevistador.',
+    level: LessonLevel.INTERMEDIATE,
+    category: LessonCategory.CC_INTERVIEW,
+    order: 6,
+    isPremium: true,
+    syllabus: [
+      'Situacion, Tarea, Accion, Resultado',
+      'Preguntas tipicas tipo STAR',
+      'Como elegir el ejemplo correcto',
+      'Duracion ideal de la respuesta',
+      'Conectores para la narrativa',
+      'Evitar respuestas vagas',
+      'Practica con 3 escenarios CC',
+      'Checklist de respuesta STAR',
+    ],
+  },
+  {
+    slug: 'cci-availability',
+    title: 'Schedule, Shift Flexibility & Availability',
+    description: 'Comunica tu disponibilidad y flexibilidad de turno de forma clara y positiva.',
+    level: LessonLevel.BEGINNER,
+    category: LessonCategory.CC_INTERVIEW,
+    order: 7,
+    isPremium: true,
+    syllabus: [
+      'Vocabulario de turnos y horarios',
+      'Como expresar disponibilidad',
+      'Responder preguntas de horario',
+      'Frases para mostrar flexibilidad',
+      'Negociar sin sonar negativo',
+      'Dias, horas y turnos en ingles',
+      'Confirmar compromisos de horario',
+      'Practica de dialogo de disponibilidad',
+    ],
+  },
+  {
+    slug: 'cci-interview-closing',
+    title: 'Questions to Ask & Closing Strong',
+    description: 'Cierra la entrevista con preguntas inteligentes y una despedida que deja impacto.',
+    level: LessonLevel.INTERMEDIATE,
+    category: LessonCategory.CC_INTERVIEW,
+    order: 8,
+    isPremium: true,
+    syllabus: [
+      'Por que preguntar al entrevistador',
+      '5 preguntas recomendadas para CC',
+      'Preguntas que debes evitar',
+      'Frase de cierre con confianza',
+      'Agradecer la oportunidad',
+      'Reafirmar tu interes en el puesto',
+      'Proximos pasos del proceso',
+      'Practica de cierre completo',
+    ],
+  },
 ];
 
 async function main() {
@@ -627,6 +780,43 @@ async function main() {
       create: lesson,
     });
   }
+
+  // ── 20 usuarios premium para clientes ────────────────────────────────────
+  const CLIENT_PASSWORDS = [
+    'Kx9#mPqL2w', 'Rn7$vBzY4t', 'Jm3@wKpX8n', 'Qv6!tHcN5s', 'Yz4$bFkW9r',
+    'Lp8#nGdR3x', 'Th2@sVmJ6q', 'Wb5!cXeK7f', 'Ng3$kZpM4h', 'Fd7#yRtB2v',
+    'Hc9@mWsQ8n', 'Xp4!bLkF6t', 'Vr6$zNgT3w', 'Mk8#qJdP5y', 'Bs2@nCxH7r',
+    'Zt5!wMvK9s', 'Ep7$fRnB4q', 'Gw3#kYmL8c', 'Jn6@tXpF2v', 'Cr9!sHzW5b',
+  ];
+
+  const clientCredentials = [];
+  for (let i = 1; i <= 20; i++) {
+    const n = String(i).padStart(2, '0');
+    const email = `cliente${n}@hablaspeak.com`;
+    const password = CLIENT_PASSWORDS[i - 1];
+    await prisma.user.upsert({
+      where: { email },
+      update: {
+        plan: Plan.PREMIUM,
+      },
+      create: {
+        email,
+        name: `Cliente ${n}`,
+        hashedPassword: hashPassword(password),
+        plan: Plan.PREMIUM,
+        streakCurrent: 0,
+      },
+    });
+    clientCredentials.push({ email, password });
+  }
+
+  console.log('\n' + '═'.repeat(55));
+  console.log('  USUARIOS PREMIUM HABLASPEAK');
+  console.log('═'.repeat(55));
+  for (const { email, password } of clientCredentials) {
+    console.log(`  ${email.padEnd(32)} |  ${password}`);
+  }
+  console.log('═'.repeat(55) + '\n');
 }
 
 main()

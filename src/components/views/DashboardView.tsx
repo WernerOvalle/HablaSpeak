@@ -211,7 +211,7 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
           <StreakCard streak={streak} loading={loading} />
         </section>
 
-        <section className="grid md:grid-cols-3 gap-6">
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <AccessCard
             title={userPlan === 'premium' ? 'Ingles General' : 'Ingles General (Free Preview)'}
             subtitle={
@@ -230,7 +230,16 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
             icon={<BookOpen size={24} />}
             locked={userPlan !== 'premium'}
             primaryLabel={userPlan === 'premium' ? 'Entrar al modulo' : 'Premium'}
-            onClick={() => onNavigate(userPlan === 'premium' ? 'classes-callcenter' : 'pricing')}
+            onClick={() => onNavigate(userPlan === 'premium' ? 'classes-callcenter' : 'dashboard')}
+          />
+
+          <AccessCard
+            title="Entrevistas Call Center"
+            subtitle="Prepara tu proceso de seleccion: presentacion, STAR, disponibilidad y cierre."
+            icon={<BookOpen size={24} />}
+            locked={userPlan !== 'premium'}
+            primaryLabel={userPlan === 'premium' ? 'Abrir modulo' : 'Premium'}
+            onClick={() => onNavigate(userPlan === 'premium' ? 'classes-cc-interview' : 'dashboard')}
           />
 
           <AccessCard
@@ -239,7 +248,7 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
             icon={<PhoneCall size={24} />}
             locked={userPlan !== 'premium'}
             primaryLabel={userPlan === 'premium' ? 'Abrir escenarios' : 'Desbloquear'}
-            onClick={() => onNavigate(userPlan === 'premium' ? 'scenarios' : 'pricing')}
+            onClick={() => onNavigate(userPlan === 'premium' ? 'scenarios' : 'dashboard')}
           />
         </section>
 
@@ -258,6 +267,7 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
           </section>
         ) : null}
 
+        {/* DISABLED: seccion comparativa free/premium deshabilitada hasta apertura publica
         {userPlan !== 'premium' ? (
           <section className="grid md:grid-cols-2 gap-6">
             <div className="rounded-[24px] sm:rounded-[32px] p-5 sm:p-7 border border-slate-900/20 dark:border-slate-700 bg-white dark:bg-slate-800/80 shadow-sm">
@@ -297,6 +307,7 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
             </div>
           </section>
         ) : null}
+        */}
 
       </main>
     </div>

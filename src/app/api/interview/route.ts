@@ -90,10 +90,12 @@ export async function POST(req: Request) {
     { role: 'assistant' as const, content: turn.aiReply },
   ]);
 
-  const rawResponse = await createGroqChatCompletion([
-    {
-      role: 'system',
-      content: `You are roleplaying a live conversation. Your role: ${aiRole}. The learner's role: ${learnerRole}. Scenario: "${scenarioTitle || 'General practice'}" — ${scenarioDescription || ''}. Stay fully in character as ${aiRole} at all times. Never introduce yourself as an agent, assistant, or support staff. Never switch roles. Reply in English only, 1-3 natural sentences, continuing the scenario.
+  let rawResponse: string;
+  try {
+    rawResponse = await createGroqChatCompletion([
+      {
+        role: 'system',
+        content: `You are roleplaying a live conversation. Your role: ${aiRole}. The learner's role: ${learnerRole}. Scenario: "${scenarioTitle || 'General practice'}" — ${scenarioDescription || ''}. Stay fully in character as ${aiRole} at all times. Never introduce yourself as an agent, assistant, or support staff. Never switch roles. Reply in English only, 1-3 natural sentences, continuing the scenario.
 
 Always return valid JSON: {"reply":"...","roundFeedback":null}
 
@@ -103,13 +105,21 @@ If roundCompletion is false: set roundFeedback to null.
 If roundCompletion is true:
 - "reply": your final in-character response as usual
 - "roundFeedback": Give CONCRETE corrections in this format: "Instead of saying [their exact phrase], say [corrected phrase] — [brief reason]." Example: "Instead of saying 'sure we have 2 transaction', say 'Sure, we have two transactions' — 'transaction' needs an 's' for plural, and spelling out numbers sounds more natural." Pick 1-2 real mistakes from their messages and fix them. Mention what they did well if applicable. Never use generic advice like "review verb tenses" without a specific example. Be direct and actionable.`,
-    },
-    ...historyMessages,
-    {
-      role: 'user',
-      content: message,
-    },
-  ], { jsonMode: true });
+      },
+      ...historyMessages,
+      {
+        role: 'user',
+        content: message,
+      },
+    ], { jsonMode: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'AI service unavailable';
+    const isRateLimit = msg.toLowerCase().includes('rate') || msg.toLowerCase().includes('429') || msg.toLowerCase().includes('limit');
+    return NextResponse.json(
+      { error: isRateLimit ? 'Too many requests — please wait a moment and try again.' : `AI error: ${msg}` },
+      { status: isRateLimit ? 429 : 502 }
+    );
+  }
 
   const parsed = safeJsonParse<InterviewResponse>(rawResponse);
 
