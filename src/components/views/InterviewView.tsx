@@ -22,6 +22,7 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isLoadingIA, setIsLoadingIA] = useState(false);
+  const [isCooldown, setIsCooldown] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showRoundModal, setShowRoundModal] = useState(false);
   const [roundFeedback, setRoundFeedback] = useState('');
@@ -35,6 +36,7 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
   const mediaChunksRef = useRef<Blob[]>([]);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -54,6 +56,7 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
 
   useEffect(() => {
     return () => {
+      if (cooldownRef.current) clearTimeout(cooldownRef.current);
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
       }
@@ -120,7 +123,7 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
   const toggleRecording = async () => {
     if (typeof window === 'undefined') return;
 
-    if (isTranscribing || isLoadingIA) return;
+    if (isTranscribing || isLoadingIA || isCooldown) return;
 
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
@@ -190,7 +193,7 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
   };
 
   const handleSendMessage = async () => {
-    if (!userInput.trim() || isLoadingIA) return;
+    if (!userInput.trim() || isLoadingIA || isCooldown) return;
 
     const textToSend = userInput;
     setChatHistory(prev => [...prev, { role: 'user', text: textToSend }]);
@@ -242,6 +245,12 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
       ]);
     } finally {
       setIsLoadingIA(false);
+      setIsCooldown(true);
+      if (cooldownRef.current) clearTimeout(cooldownRef.current);
+      cooldownRef.current = setTimeout(() => {
+        setIsCooldown(false);
+        cooldownRef.current = null;
+      }, 500);
     }
   };
 
@@ -317,7 +326,7 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
           value={userInput}
           isListening={isRecording}
           isTranscribing={isTranscribing}
-          isLoading={isLoadingIA}
+          isLoading={isLoadingIA || isCooldown}
           showSendHint={showSendHint}
           hasApiKey={true}
           onChange={value => {

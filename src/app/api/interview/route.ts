@@ -90,92 +90,91 @@ export async function POST(req: Request) {
     { role: 'assistant' as const, content: turn.aiReply },
   ]);
 
-  let rawResponse: string;
-  try {
-    rawResponse = await createGroqChatCompletion([
-      {
-        role: 'system',
-        content: `You are roleplaying a live conversation. Your role: ${aiRole}. The learner's role: ${learnerRole}. Scenario: "${scenarioTitle || 'General practice'}" — ${scenarioDescription || ''}. Stay fully in character as ${aiRole} at all times. Never introduce yourself as an agent, assistant, or support staff. Never switch roles. Reply in English only, 1-3 natural sentences, continuing the scenario.
-
-Always return valid JSON: {"reply":"...","roundFeedback":null}
-
-roundCompletion: ${isRoundCompletion}
-
-If roundCompletion is false: set roundFeedback to null.
-If roundCompletion is true:
-- "reply": your final in-character response as usual
-- "roundFeedback": Give CONCRETE corrections in this format: "Instead of saying [their exact phrase], say [corrected phrase] — [brief reason]." Example: "Instead of saying 'sure we have 2 transaction', say 'Sure, we have two transactions' — 'transaction' needs an 's' for plural, and spelling out numbers sounds more natural." Pick 1-2 real mistakes from their messages and fix them. Mention what they did well if applicable. Never use generic advice like "review verb tenses" without a specific example. Be direct and actionable.`,
-      },
-      ...historyMessages,
-      {
-        role: 'user',
-        content: message,
-      },
-    ], { jsonMode: true });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'AI service unavailable';
-    const isRateLimit = msg.toLowerCase().includes('rate') || msg.toLowerCase().includes('429') || msg.toLowerCase().includes('limit');
-    return NextResponse.json(
-      { error: isRateLimit ? 'Too many requests — please wait a moment and try again.' : `AI error: ${msg}` },
-      { status: isRateLimit ? 429 : 502 }
-    );
-  }
-
-  const parsed = safeJsonParse<InterviewResponse>(rawResponse);
-
-  // Extraer el reply: del JSON parseado o del texto plano como fallback
-  const replyText = parsed?.reply?.trim()
-    || rawResponse.trim().replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
-
-  if (!replyText) {
-    return NextResponse.json({ error: 'Could not get a response. Please try again.' }, { status: 502 });
-  }
-
   const newTurn: PracticeTurn = {
     userMessage: message.trim(),
-    aiReply: replyText,
+    aiReply: '',
   };
   const nextTurns = [...previousTurns, newTurn];
   const practiceCompleted = isRoundCompletion;
 
+  let replyText: string;
   let finalFeedback: string | null = null;
-  if (practiceCompleted) {
-    const fromFirstCall =
-      typeof parsed?.roundFeedback === 'string' && parsed.roundFeedback.trim()
-        ? parsed.roundFeedback.trim()
-        : null;
-    if (fromFirstCall) {
-      finalFeedback = fromFirstCall;
-    } else {
-      // La IA no devolvió feedback válido: hacer una segunda llamada solo para feedback
-      const feedbackQuota = await reserveDailyAiResponse(user.id);
-      if (feedbackQuota.allowed) {
-        try {
-          const conversationText = nextTurns
-            .map(t => `Learner: ${t.userMessage}\n${aiRole}: ${t.aiReply}`)
-            .join('\n\n');
-          const feedbackResponse = await createGroqChatCompletion([
-            {
-              role: 'system',
-              content: `You are an English teacher. Based on this conversation, give 2-4 sentences of feedback in English. Use this format: "Instead of saying [their phrase], say [corrected phrase] — [reason]." Pick 1-2 real mistakes from the learner's messages and fix them. Mention what they did well if applicable. Be direct and actionable. Reply with ONLY the feedback text, no JSON.`,
-            },
-            {
-              role: 'user',
-              content: `Conversation:\n\n${conversationText}\n\nGive specific corrections for the learner.`,
-            },
-          ]);
-          const trimmed = feedbackResponse?.trim();
-          if (trimmed && trimmed.length > 20) {
-            finalFeedback = trimmed;
-          }
-        } catch {
-          // Si falla la segunda llamada, usar fallback
-        }
+
+  if (isRoundCompletion) {
+    // En la iteración que completa la ronda: UNA sola llamada para feedback.
+    // No pedimos respuesta del personaje (el usuario no la ve por el modal).
+    const conversationText = nextTurns
+      .map((t, i) => {
+        const learner = `Learner: ${t.userMessage}`;
+        const ai = t.aiReply ? `${aiRole}: ${t.aiReply}` : `${aiRole}: [Round completed]`;
+        return i < nextTurns.length - 1 ? `${learner}\n${ai}` : learner;
+      })
+      .join('\n\n');
+
+    try {
+      const feedbackResponse = await createGroqChatCompletion([
+        {
+          role: 'system',
+          content: `You are an English teacher. Based on this conversation, give 2-4 sentences of feedback in English. Use this format: "Instead of saying [their phrase], say [corrected phrase] — [reason]." Pick 1-2 real mistakes from the learner's messages and fix them. Mention what they did well if applicable. Be direct and actionable. Reply with ONLY the feedback text, no JSON.`,
+        },
+        {
+          role: 'user',
+          content: `Conversation:\n\n${conversationText}\n\nGive specific corrections for the learner.`,
+        },
+      ]);
+      const trimmed = feedbackResponse?.trim();
+      if (trimmed && trimmed.length > 20) {
+        finalFeedback = trimmed;
       }
-      if (!finalFeedback) {
-        finalFeedback = buildBlockFeedback(nextTurns);
-      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'AI service unavailable';
+      const isRateLimit = msg.toLowerCase().includes('rate') || msg.toLowerCase().includes('429') || msg.toLowerCase().includes('limit');
+      return NextResponse.json(
+        { error: isRateLimit ? 'Too many requests — please wait a moment and try again.' : `AI error: ${msg}` },
+        { status: isRateLimit ? 429 : 502 }
+      );
     }
+    if (!finalFeedback) {
+      finalFeedback = buildBlockFeedback(nextTurns);
+    }
+    replyText = "Great job! You've completed this round.";
+  } else {
+    // Iteraciones normales: respuesta del personaje
+    let rawResponse: string;
+    try {
+      rawResponse = await createGroqChatCompletion([
+        {
+          role: 'system',
+          content: `You are roleplaying a live conversation. Your role: ${aiRole}. The learner's role: ${learnerRole}. Scenario: "${scenarioTitle || 'General practice'}" — ${scenarioDescription || ''}. Stay fully in character as ${aiRole} at all times. Never introduce yourself as an agent, assistant, or support staff. Never switch roles. Reply in English only, 1-3 natural sentences, continuing the scenario.
+
+Always return valid JSON: {"reply":"...","roundFeedback":null}
+
+roundCompletion is false: set roundFeedback to null. Only return the reply.`,
+        },
+        ...historyMessages,
+        {
+          role: 'user',
+          content: message,
+        },
+      ], { jsonMode: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'AI service unavailable';
+      const isRateLimit = msg.toLowerCase().includes('rate') || msg.toLowerCase().includes('429') || msg.toLowerCase().includes('limit');
+      return NextResponse.json(
+        { error: isRateLimit ? 'Too many requests — please wait a moment and try again.' : `AI error: ${msg}` },
+        { status: isRateLimit ? 429 : 502 }
+      );
+    }
+
+    const parsed = safeJsonParse<InterviewResponse>(rawResponse);
+    replyText = parsed?.reply?.trim()
+      || rawResponse.trim().replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
+
+    if (!replyText) {
+      return NextResponse.json({ error: 'Could not get a response. Please try again.' }, { status: 502 });
+    }
+
+    newTurn.aiReply = replyText;
   }
 
   await prisma.$transaction(async tx => {

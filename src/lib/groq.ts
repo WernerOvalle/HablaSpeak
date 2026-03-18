@@ -21,58 +21,77 @@ async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function createGroqChatCompletion(messages: GroqMessage[], options?: { jsonMode?: boolean }) {
-  const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+/** Cola para serializar llamadas a Groq y evitar ráfagas que disparen rate limit */
+let groqChatQueue: Promise<unknown> = Promise.resolve();
+const GROQ_MIN_GAP_MS = 400;
 
-  if (!apiKey) {
-    throw new Error('GROQ_API_KEY no configurada');
+async function withGroqThrottle<T>(fn: () => Promise<T>): Promise<T> {
+  const prev = groqChatQueue;
+  let resolveNext: () => void;
+  groqChatQueue = new Promise<void>(r => { resolveNext = r; });
+  try {
+    await prev;
+    await sleep(GROQ_MIN_GAP_MS);
+    return await fn();
+  } finally {
+    resolveNext!();
   }
+}
 
-  const body = JSON.stringify({
-    model,
-    temperature: 0.4,
-    ...(options?.jsonMode ? { response_format: { type: 'json_object' } } : {}),
-    messages,
-  });
+export async function createGroqChatCompletion(messages: GroqMessage[], options?: { jsonMode?: boolean }) {
+  return withGroqThrottle(async () => {
+    const apiKey = process.env.GROQ_API_KEY;
+    const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
-  const MAX_RETRIES = 3;
-  const RETRY_DELAYS = [2000, 5000, 10000];
+    if (!apiKey) {
+      throw new Error('GROQ_API_KEY no configurada');
+    }
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body,
+    const body = JSON.stringify({
+      model,
+      temperature: 0.4,
+      ...(options?.jsonMode ? { response_format: { type: 'json_object' } } : {}),
+      messages,
     });
 
-    if (response.status === 429 && attempt < MAX_RETRIES) {
-      const retryAfter = response.headers.get('retry-after');
-      const waitMs = retryAfter ? parseInt(retryAfter) * 1000 : RETRY_DELAYS[attempt];
-      await sleep(waitMs);
-      continue;
+    const MAX_RETRIES = 3;
+    const RETRY_DELAYS = [3000, 5000, 10000];
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body,
+      });
+
+      if (response.status === 429 && attempt < MAX_RETRIES) {
+        const retryAfter = response.headers.get('retry-after');
+        const waitMs = retryAfter ? parseInt(retryAfter) * 1000 : RETRY_DELAYS[attempt];
+        await sleep(waitMs);
+        continue;
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const message = data?.error?.message || 'Error desconocido llamando a Groq';
+        throw new Error(message);
+      }
+
+      const content = data?.choices?.[0]?.message?.content;
+
+      if (!content || typeof content !== 'string') {
+        throw new Error('Respuesta inválida de Groq');
+      }
+
+      return content;
     }
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      const message = data?.error?.message || 'Error desconocido llamando a Groq';
-      throw new Error(message);
-    }
-
-    const content = data?.choices?.[0]?.message?.content;
-
-    if (!content || typeof content !== 'string') {
-      throw new Error('Respuesta inválida de Groq');
-    }
-
-    return content;
-  }
-
-  throw new Error('Rate limit de Groq: demasiadas solicitudes, intenta en unos segundos.');
+    throw new Error('Rate limit de Groq: demasiadas solicitudes, intenta en unos segundos.');
+  });
 }
 
 export async function createGroqTranscription(audioFile: File, language?: string) {
