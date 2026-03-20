@@ -1,10 +1,11 @@
 'use client';
 
-import { ChevronRight, Crown, Headphones, Lock, PhoneCall, ShieldAlert, CreditCard, RotateCcw, Wifi, XCircle, KeyRound, AlertTriangle, TrendingUp, Receipt, Package, MessageSquareWarning, CalendarClock, ArrowDownCircle, Clock, UserPlus, Globe } from 'lucide-react';
+import { ChevronRight, Crown, Headphones, Lock, PhoneCall, ShieldAlert, CreditCard, RotateCcw, Wifi, XCircle, KeyRound, AlertTriangle, TrendingUp, Receipt, Package, MessageSquareWarning, CalendarClock, ArrowDownCircle, Clock, UserPlus, Globe, Sparkles } from 'lucide-react';
 import Navbar from '../Navbar';
 import type { InterviewScenarioId, UserPlan, View } from '@/types/app';
 
 interface ScenariosViewProps {
+  isAdmin?: boolean;
   userPlan: UserPlan;
   onNavigate: (view: View) => void;
   onStartInterview: (scenarioId: InterviewScenarioId) => void;
@@ -56,12 +57,12 @@ function ScenarioCard({ id, icon, title, subtitle, locked = false, onClick }: Sc
   );
 }
 
-export default function ScenariosView({ userPlan, onNavigate, onStartInterview }: ScenariosViewProps) {
+export default function ScenariosView({ userPlan, onNavigate, onStartInterview, isAdmin }: ScenariosViewProps) {
   const isPremium = userPlan === 'premium';
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col transition-colors duration-300">
-      <Navbar userPlan={userPlan} onNavigate={onNavigate} />
+      <Navbar userPlan={userPlan} onNavigate={onNavigate} isAdmin={isAdmin} />
 
       <div className="max-w-4xl mx-auto w-full p-8 pt-12">
         <button
@@ -75,10 +76,6 @@ export default function ScenariosView({ userPlan, onNavigate, onStartInterview }
         <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-8 tracking-tight">
           Escenarios de practica para call center
         </h2>
-
-        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-2xl">
-          Todos los escenarios premium se muestran aunque tu cuenta sea free. Asi puedes ver lo que desbloqueas al subir de plan.
-        </p>
 
         <div className="space-y-4">
           <ScenarioCard
@@ -214,6 +211,13 @@ export default function ScenariosView({ userPlan, onNavigate, onStartInterview }
             locked={!isPremium}
             icon={<Globe size={20} />}
             onClick={() => (isPremium ? onStartInterview('call-center-language-barrier') : onNavigate('pricing'))}
+          />
+          <ScenarioCard
+            title="Practica libre"
+            subtitle="Sin guion fijo — habla de lo que quieras y Alex se adapta a ti."
+            locked={!isPremium}
+            icon={<Sparkles size={20} />}
+            onClick={() => (isPremium ? onStartInterview('free-practice') : onNavigate('pricing'))}
           />
         </div>
       </div>

@@ -50,6 +50,19 @@ html {
     scroll-behavior: smooth;
 }
 
+/* ===========================
+   KEYFRAMES DE COMPONENTES
+   =========================== */
+@keyframes bubblePulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.02); opacity: 0.85; }
+}
+
+@keyframes typingDot {
+    0%, 60%, 100% { opacity: 0.3; }
+    30% { opacity: 1; }
+}
+
 body {
     @apply bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100;
     font-family: 'Inter', system-ui, sans-serif;

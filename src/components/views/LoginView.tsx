@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { LockKeyhole, Mic, User, Loader2 } from 'lucide-react';
+import { LockKeyhole, MessageSquare, User, Loader2 } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 
 interface LoginViewProps {
@@ -71,15 +71,15 @@ export default function LoginView({ onLogin }: LoginViewProps) {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-6 transition-colors duration-300">
       <div className="max-w-md w-full bg-white dark:bg-slate-800/80 dark:backdrop-blur rounded-[40px] shadow-2xl dark:shadow-slate-900/50 p-10 text-center border border-slate-900/20 dark:border-slate-700/50">
 
-        {/* Icono */}
-        <div className="inline-flex p-6 bg-indigo-50 dark:bg-indigo-500/10 rounded-3xl mb-8 text-indigo-600 dark:text-indigo-400 ring-8 ring-indigo-50/50 dark:ring-indigo-500/10">
-          <Mic size={48} />
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-4 mb-8">
+          <div className="bg-indigo-600 p-4 rounded-2xl text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900">
+            <MessageSquare size={32} />
+          </div>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            Habla<span className="text-indigo-600">Speak</span>
+          </h1>
         </div>
-
-        {/* Título */}
-        <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
-          HablaSpeak
-        </h1>
         <p className="text-slate-400 dark:text-slate-400 mb-10 font-medium">
           Domina el inglés con IA
         </p>

@@ -25,7 +25,8 @@ async function sleep(ms: number) {
 let groqChatQueue: Promise<unknown> = Promise.resolve();
 const GROQ_MIN_GAP_MS = 400;
 
-async function withGroqThrottle<T>(fn: () => Promise<T>): Promise<T> {
+/** Exportado para uso en ai-chat (fallback Groq + OpenRouter) */
+export async function withAiThrottle<T>(fn: () => Promise<T>): Promise<T> {
   const prev = groqChatQueue;
   let resolveNext: () => void;
   groqChatQueue = new Promise<void>(r => { resolveNext = r; });
@@ -38,8 +39,7 @@ async function withGroqThrottle<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
-export async function createGroqChatCompletion(messages: GroqMessage[], options?: { jsonMode?: boolean }) {
-  return withGroqThrottle(async () => {
+export async function createGroqChatCompletionRaw(messages: GroqMessage[], options?: { jsonMode?: boolean }) {
     const apiKey = process.env.GROQ_API_KEY;
     const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
@@ -91,7 +91,51 @@ export async function createGroqChatCompletion(messages: GroqMessage[], options?
     }
 
     throw new Error('Rate limit de Groq: demasiadas solicitudes, intenta en unos segundos.');
+}
+
+export async function createGroqChatCompletionStreamRaw(
+  messages: GroqMessage[],
+  options?: { jsonMode?: boolean }
+): Promise<ReadableStream<Uint8Array>> {
+  const apiKey = process.env.GROQ_API_KEY;
+  const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+
+  if (!apiKey) {
+    throw new Error('GROQ_API_KEY no configurada');
+  }
+
+  const body = JSON.stringify({
+    model,
+    temperature: 0.4,
+    stream: true,
+    ...(options?.jsonMode ? { response_format: { type: 'json_object' } } : {}),
+    messages,
   });
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body,
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const message = data?.error?.message || 'Error desconocido llamando a Groq';
+    throw new Error(message);
+  }
+
+  if (!response.body) {
+    throw new Error('Groq no devolvió stream');
+  }
+
+  return response.body;
+}
+
+export async function createGroqChatCompletion(messages: GroqMessage[], options?: { jsonMode?: boolean }) {
+  return withAiThrottle(() => createGroqChatCompletionRaw(messages, options));
 }
 
 export async function createGroqTranscription(audioFile: File, language?: string) {

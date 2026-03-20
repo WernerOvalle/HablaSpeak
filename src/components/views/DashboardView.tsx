@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, BookOpen, ChevronDown, ChevronUp, Loader2, Lock, MessageSquare, PhoneCall, TrendingUp } from 'lucide-react';
+import { ArrowRight, BookOpen, ChevronDown, ChevronUp, Loader2, Lock, MessageSquare, PhoneCall, Shield, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Navbar from '../Navbar';
 import type { InterviewScenarioId, UserPlan, View } from '@/types/app';
@@ -8,6 +8,7 @@ import type { InterviewScenarioId, UserPlan, View } from '@/types/app';
 interface DashboardViewProps {
   userPlan: UserPlan;
   onNavigate: (view: View) => void;
+  isAdmin?: boolean;
 }
 
 function AccessCard({
@@ -171,7 +172,7 @@ function FeedbackHistorySection({ entries, loading }: { entries: FeedbackEntry[]
   );
 }
 
-export default function DashboardView({ userPlan, onNavigate }: DashboardViewProps) {
+export default function DashboardView({ userPlan, onNavigate, isAdmin }: DashboardViewProps) {
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
   const [feedbackHistory, setFeedbackHistory] = useState<FeedbackEntry[]>([]);
@@ -192,7 +193,7 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] dark:bg-slate-950 transition-colors duration-300">
-      <Navbar userPlan={userPlan} onNavigate={onNavigate} />
+      <Navbar userPlan={userPlan} onNavigate={onNavigate} isAdmin={isAdmin} />
 
       <main className="max-w-6xl mx-auto px-4 py-6 sm:p-8 space-y-6 sm:space-y-8">
         <section className="grid lg:grid-cols-3 gap-6">
@@ -229,13 +230,13 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
             subtitle="Documentacion profesional por escenario: apertura, objeciones y escalaciones."
             icon={<BookOpen size={24} />}
             locked={userPlan !== 'premium'}
-            primaryLabel={userPlan === 'premium' ? 'Entrar al modulo' : 'Premium'}
+            primaryLabel={userPlan === 'premium' ? 'Abrir modulo' : 'Premium'}
             onClick={() => onNavigate(userPlan === 'premium' ? 'classes-callcenter' : 'dashboard')}
           />
 
           <AccessCard
             title="Entrevistas Call Center"
-            subtitle="Prepara tu proceso de seleccion: presentacion, STAR, disponibilidad y cierre."
+            subtitle="Presentacion personal, respuestas situacionales y cierre profesional."
             icon={<BookOpen size={24} />}
             locked={userPlan !== 'premium'}
             primaryLabel={userPlan === 'premium' ? 'Abrir modulo' : 'Premium'}
@@ -250,6 +251,16 @@ export default function DashboardView({ userPlan, onNavigate }: DashboardViewPro
             primaryLabel={userPlan === 'premium' ? 'Abrir escenarios' : 'Desbloquear'}
             onClick={() => onNavigate(userPlan === 'premium' ? 'scenarios' : 'dashboard')}
           />
+
+          {isAdmin ? (
+            <AccessCard
+              title="Panel de administración"
+              subtitle="Crear usuarios, actualizar contraseñas e inactivar cuentas."
+              icon={<Shield size={24} />}
+              primaryLabel="Abrir panel"
+              onClick={() => onNavigate('admin')}
+            />
+          ) : null}
         </section>
 
         {userPlan === 'premium' ? (

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createGroqChatCompletion } from '@/lib/groq';
+import { createAiChatCompletion } from '@/lib/ai-chat';
 import { getCurrentUser } from '@/lib/session';
 import { DAILY_AI_RESPONSE_LIMIT, reserveDailyAiResponse } from '@/lib/ai-usage';
 import { INTERVIEW_BLOCK_SIZE, toPracticeTurns, buildBlockFeedback, type PracticeTurn } from '@/lib/interview-practice';
+import { hasPremiumAccess } from '@/lib/plan-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
-  if (user.plan !== 'PREMIUM') {
+  if (!hasPremiumAccess(user)) {
     return NextResponse.json({ error: 'La entrevista con IA es premium' }, { status: 403 });
   }
 
@@ -112,7 +113,7 @@ export async function POST(req: Request) {
       .join('\n\n');
 
     try {
-      const feedbackResponse = await createGroqChatCompletion([
+      const feedbackResponse = await createAiChatCompletion([
         {
           role: 'system',
           content: `You are an English teacher. Based on this conversation, give 2-4 sentences of feedback in English. Use this format: "Instead of saying [their phrase], say [corrected phrase] — [reason]." Pick 1-2 real mistakes from the learner's messages and fix them. Mention what they did well if applicable. Be direct and actionable. Reply with ONLY the feedback text, no JSON.`,
@@ -142,7 +143,7 @@ export async function POST(req: Request) {
     // Iteraciones normales: respuesta del personaje
     let rawResponse: string;
     try {
-      rawResponse = await createGroqChatCompletion([
+      rawResponse = await createAiChatCompletion([
         {
           role: 'system',
           content: `You are roleplaying a live conversation. Your role: ${aiRole}. The learner's role: ${learnerRole}. Scenario: "${scenarioTitle || 'General practice'}" — ${scenarioDescription || ''}. Stay fully in character as ${aiRole} at all times. Never introduce yourself as an agent, assistant, or support staff. Never switch roles. Reply in English only, 1-3 natural sentences, continuing the scenario.

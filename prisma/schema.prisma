@@ -12,6 +12,11 @@ enum Plan {
   PREMIUM
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 enum LessonLevel {
   BEGINNER
   INTERMEDIATE
@@ -35,6 +40,8 @@ model User {
   hashedPassword String
   name           String?
   plan           Plan             @default(FREE)
+  role           Role             @default(USER)
+  active         Boolean          @default(true)
   errors         ErrorRecord[]
   lessonQuestions LessonQuestion[]
   dailyAiUsages  DailyAiUsage[]

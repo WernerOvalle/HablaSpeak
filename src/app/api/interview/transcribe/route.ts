@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { createGroqTranscription } from '@/lib/groq';
+import { hasPremiumAccess } from '@/lib/plan-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
-  if (user.plan !== 'PREMIUM') {
+  if (!hasPremiumAccess(user)) {
     return NextResponse.json({ error: 'La transcripcion por voz es premium' }, { status: 403 });
   }
 

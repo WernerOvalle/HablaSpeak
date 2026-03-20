@@ -10,6 +10,7 @@ import ClassesView from './views/ClassesView';
 import ScenariosView from './views/ScenariosView';
 import InterviewView from './views/InterviewView';
 import PricingView from './views/PricingView';
+import AdminView from './views/AdminView';
 import type { InterviewScenario, InterviewScenarioId, UserPlan, View } from '@/types/app';
 
 export default function HablaSpeakApp() {
@@ -152,11 +153,19 @@ export default function HablaSpeakApp() {
         initialMessage:
           'Hello... uh, my English not very good. I have problem with my... account? I pay but is not working. I not understand what happen.',
       },
+      'free-practice': {
+        id: 'free-practice',
+        title: 'Practica libre',
+        description: 'Sin guion fijo — habla de lo que quieras y Alex se adapta a ti.',
+        initialMessage:
+          "Hey! I'm Alex, your English conversation partner. There's no script today — this is your time. What would you like to talk about or practice? It could be anything: small talk, work situations, asking for directions, a job interview, or just a casual chat. You lead, I follow.",
+      },
     }),
     []
   );
 
   const userPlan: UserPlan = session?.user?.isPremium ? 'premium' : 'free';
+  const isAdmin = Boolean(session?.user?.isAdmin);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -166,7 +175,11 @@ export default function HablaSpeakApp() {
     if (status === 'authenticated' && view === 'login') {
       setView('dashboard');
     }
-  }, [status, view]);
+
+    if (status === 'authenticated' && view === 'admin' && !isAdmin) {
+      setView('dashboard');
+    }
+  }, [status, view, isAdmin]);
 
   const handleLogin = () => setView('dashboard');
 
@@ -186,77 +199,87 @@ export default function HablaSpeakApp() {
   // DISABLED: pricing redirige a dashboard hasta apertura publica
   const navigate = (v: View) => setView(v === 'pricing' ? 'dashboard' : v);
 
-  if (status === 'loading') {
-    return (
-      <ThemeProvider>
+  return (
+    <ThemeProvider>
+      {status === 'loading' ? (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
           <Loader2 className="animate-spin text-indigo-500" size={32} />
         </div>
-      </ThemeProvider>
-    );
-  }
+      ) : (
+        <>
+          {status !== 'authenticated' || view === 'login' ? (
+            <LoginView onLogin={handleLogin} />
+          ) : null}
 
-  return (
-    <ThemeProvider>
-      {status !== 'authenticated' || view === 'login' ? (
-        <LoginView onLogin={handleLogin} />
-      ) : null}
+          {status === 'authenticated' && view === 'dashboard' && (
+            <DashboardView
+              userPlan={userPlan}
+              onNavigate={navigate}
+              isAdmin={isAdmin}
+            />
+          )}
 
-      {status === 'authenticated' && view === 'dashboard' && (
-        <DashboardView
-          userPlan={userPlan}
-          onNavigate={navigate}
-        />
+          {status === 'authenticated' && view === 'classes-general' && (
+            <ClassesView
+              moduleType="GENERAL"
+              userPlan={userPlan}
+              onNavigate={navigate}
+              isAdmin={isAdmin}
+            />
+          )}
+
+          {status === 'authenticated' && view === 'classes-callcenter' && (
+            <ClassesView
+              moduleType="CALL_CENTER"
+              userPlan={userPlan}
+              onNavigate={navigate}
+              isAdmin={isAdmin}
+            />
+          )}
+
+          {status === 'authenticated' && view === 'classes-cc-interview' && (
+            <ClassesView
+              moduleType="CC_INTERVIEW"
+              userPlan={userPlan}
+              onNavigate={navigate}
+              isAdmin={isAdmin}
+            />
+          )}
+
+          {status === 'authenticated' && view === 'scenarios' && (
+            <ScenariosView
+              userPlan={userPlan}
+              onNavigate={navigate}
+              onStartInterview={handleStartInterview}
+              isAdmin={isAdmin}
+            />
+          )}
+
+          {status === 'authenticated' && view === 'admin' && isAdmin && (
+            <AdminView
+              userPlan={userPlan}
+              onNavigate={navigate}
+            />
+          )}
+
+          {status === 'authenticated' && view === 'interview' && (
+            <InterviewView
+              scenario={scenarios[scenarioId]}
+              onExit={() => setView('scenarios')}
+            />
+          )}
+
+          {/* DISABLED: vista de pricing deshabilitada hasta apertura publica
+          {status === 'authenticated' && view === 'pricing' && (
+            <PricingView
+              userPlan={userPlan}
+              onNavigate={navigate}
+              onSubscribe={handleSubscribe}
+            />
+          )}
+          */}
+        </>
       )}
-
-      {status === 'authenticated' && view === 'classes-general' && (
-        <ClassesView
-          moduleType="GENERAL"
-          userPlan={userPlan}
-          onNavigate={navigate}
-        />
-      )}
-
-      {status === 'authenticated' && view === 'classes-callcenter' && (
-        <ClassesView
-          moduleType="CALL_CENTER"
-          userPlan={userPlan}
-          onNavigate={navigate}
-        />
-      )}
-
-      {status === 'authenticated' && view === 'classes-cc-interview' && (
-        <ClassesView
-          moduleType="CC_INTERVIEW"
-          userPlan={userPlan}
-          onNavigate={navigate}
-        />
-      )}
-
-      {status === 'authenticated' && view === 'scenarios' && (
-        <ScenariosView
-          userPlan={userPlan}
-          onNavigate={navigate}
-          onStartInterview={handleStartInterview}
-        />
-      )}
-
-      {status === 'authenticated' && view === 'interview' && (
-        <InterviewView
-          scenario={scenarios[scenarioId]}
-          onExit={() => setView('scenarios')}
-        />
-      )}
-
-      {/* DISABLED: vista de pricing deshabilitada hasta apertura publica
-      {status === 'authenticated' && view === 'pricing' && (
-        <PricingView
-          userPlan={userPlan}
-          onNavigate={navigate}
-          onSubscribe={handleSubscribe}
-        />
-      )}
-      */}
     </ThemeProvider>
   );
 }

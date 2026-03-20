@@ -8,6 +8,7 @@ import {
   ChatMessage,
   InterviewInput,
   LoadingBubble,
+  TypingBubble,
 } from '../interview/InterviewComponents';
 import type { InterviewScenario } from '@/types/app';
 
@@ -32,6 +33,8 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     { role: 'ai', text: scenario.initialMessage },
   ]);
+  const [typingDisplayText, setTypingDisplayText] = useState<string | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaChunksRef = useRef<Blob[]>([]);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -40,7 +43,7 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatHistory, isLoadingIA]);
+  }, [chatHistory, isLoadingIA, typingDisplayText]);
 
   useEffect(() => {
     const initialMessage = { role: 'ai' as const, text: scenario.initialMessage };
@@ -57,6 +60,7 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
   useEffect(() => {
     return () => {
       if (cooldownRef.current) clearTimeout(cooldownRef.current);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
       }
@@ -201,6 +205,7 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
     setShowSendHint(false);
     setIsLoadingIA(true);
 
+    let successWithAnimation = false;
     try {
       const freshSession = isFirstMessage;
       if (isFirstMessage) setIsFirstMessage(false);
@@ -224,9 +229,36 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
         throw new Error(data.error || 'No se pudo contactar a Groq');
       }
 
-      const aiResponse = data.displayText || 'No se recibio respuesta valida';
-      setChatHistory(prev => [...prev, { role: 'ai', text: aiResponse }]);
-      speakWithBrowser(aiResponse);
+      const aiResponse = data.displayText || data.reply || 'No se recibio respuesta valida';
+      successWithAnimation = true;
+      setIsLoadingIA(false);
+
+      const MS_PER_WORD = 38;
+      const words = aiResponse.split(/\s+/).filter(Boolean);
+
+      const animateTyping = (index: number, displayed: string) => {
+        if (index >= words.length) {
+          setChatHistory(prev => [...prev, { role: 'ai', text: aiResponse }]);
+          setTypingDisplayText(null);
+          typingTimeoutRef.current = null;
+          speakWithBrowser(aiResponse);
+          setIsCooldown(true);
+          if (cooldownRef.current) clearTimeout(cooldownRef.current);
+          cooldownRef.current = setTimeout(() => {
+            setIsCooldown(false);
+            cooldownRef.current = null;
+          }, 500);
+          return;
+        }
+        const next = displayed + (index === 0 ? '' : ' ') + words[index];
+        setTypingDisplayText(next);
+        typingTimeoutRef.current = setTimeout(() => animateTyping(index + 1, next), MS_PER_WORD);
+      };
+
+      setTypingDisplayText('');
+      requestAnimationFrame(() => {
+        animateTyping(0, '');
+      });
 
       if (data.practiceCompleted) {
         setRoundFeedback(
@@ -244,13 +276,15 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
         { role: 'ai', text: `Connection error: ${e instanceof Error ? e.message : String(e)}` },
       ]);
     } finally {
-      setIsLoadingIA(false);
-      setIsCooldown(true);
-      if (cooldownRef.current) clearTimeout(cooldownRef.current);
-      cooldownRef.current = setTimeout(() => {
-        setIsCooldown(false);
-        cooldownRef.current = null;
-      }, 500);
+      if (!successWithAnimation) {
+        setIsLoadingIA(false);
+        setIsCooldown(true);
+        if (cooldownRef.current) clearTimeout(cooldownRef.current);
+        cooldownRef.current = setTimeout(() => {
+          setIsCooldown(false);
+          cooldownRef.current = null;
+        }, 500);
+      }
     }
   };
 
@@ -318,7 +352,10 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
           {chatHistory.map((msg, i) => (
             <ChatBubble key={i} message={msg} onRepeat={speakWithBrowser} />
           ))}
-          {isLoadingIA && <LoadingBubble />}
+          {isLoadingIA && typingDisplayText === null ? <LoadingBubble /> : null}
+          {typingDisplayText !== null ? (
+            <TypingBubble partialText={typingDisplayText ? typingDisplayText : undefined} variant="dark" />
+          ) : null}
           <div ref={bottomRef} />
         </div>
 
@@ -326,7 +363,7 @@ export default function InterviewView({ onExit, scenario }: InterviewViewProps) 
           value={userInput}
           isListening={isRecording}
           isTranscribing={isTranscribing}
-          isLoading={isLoadingIA || isCooldown}
+          isLoading={isLoadingIA || isCooldown || typingDisplayText !== null}
           showSendHint={showSendHint}
           hasApiKey={true}
           onChange={value => {

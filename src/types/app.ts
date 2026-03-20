@@ -8,7 +8,8 @@ export type View =
   | 'classes-cc-interview'
   | 'scenarios'
   | 'interview'
-  | 'pricing';
+  | 'pricing'
+  | 'admin';
 export type InterviewScenarioId =
   | 'job-interview'
   | 'call-center-opening'
@@ -28,7 +29,8 @@ export type InterviewScenarioId =
   | 'call-center-plan-downgrade'
   | 'call-center-callback-followup'
   | 'call-center-new-customer'
-  | 'call-center-language-barrier';
+  | 'call-center-language-barrier'
+  | 'free-practice';
 
 export type LessonLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 export type LessonCategory = 'GENERAL' | 'CALL_CENTER' | 'CC_INTERVIEW';

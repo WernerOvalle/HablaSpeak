@@ -9,7 +9,7 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email', placeholder: 'demo@hablaspeak.com' },
+        email: { label: 'Email', type: 'email', placeholder: 'admin@hablaspeak.com' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
@@ -22,13 +22,21 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        if (!user.active) {
+          return null;
+        }
+
         const syncedUser = await updateUserStreakIfNeeded(user);
+        const isAdmin = syncedUser.role === 'ADMIN';
+        const isPremium = isAdmin || syncedUser.plan === 'PREMIUM';
 
         return {
           id: syncedUser.id,
           email: syncedUser.email,
           name: syncedUser.name,
-          isPremium: syncedUser.plan === 'PREMIUM',
+          isPremium,
+          isAdmin,
+          role: syncedUser.role,
         };
       },
     }),
@@ -39,6 +47,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.isPremium = user.isPremium;
+        token.isAdmin = user.isAdmin;
+        token.role = user.role;
       }
 
       return token;
@@ -48,6 +58,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id || '';
         session.user.email = session.user.email || '';
         session.user.isPremium = Boolean(token.isPremium);
+        session.user.isAdmin = Boolean(token.isAdmin);
+        session.user.role = token.role;
       }
 
       return session;

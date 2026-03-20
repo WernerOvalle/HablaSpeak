@@ -30,8 +30,5 @@ pnpm-debug.log*
 .env.test
 .env.production
 
-# credenciales generadas por seed (nunca commitear)
-prisma/seed-credentials.txt
-
 # vercel
 .vercel

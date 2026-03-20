@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 
-export const DAILY_AI_RESPONSE_LIMIT = Number(process.env.DAILY_AI_LIMIT) || 30;
+export const DAILY_AI_RESPONSE_LIMIT = Number(process.env.DAILY_AI_LIMIT) || 50;
 
 function getDayKey(date = new Date()) {
   return date.toISOString().slice(0, 10);

@@ -1,6 +1,7 @@
 'use client';
 
 import { BookOpen, Crown, Loader2, Send } from 'lucide-react';
+import { TypingBubble } from '@/components/interview/InterviewComponents';
 import { useEffect, useMemo, useState } from 'react';
 import Navbar from '../Navbar';
 import type { LessonSummary, UserPlan, View } from '@/types/app';
@@ -12,6 +13,7 @@ interface ClassesViewProps {
   moduleType: 'GENERAL' | 'CALL_CENTER' | 'CC_INTERVIEW';
   userPlan: UserPlan;
   onNavigate: (view: View) => void;
+  isAdmin?: boolean;
 }
 
 type LessonChatMessage = { role: 'user' | 'assistant'; text: string };
@@ -108,12 +110,13 @@ function renderRichText(text: string) {
   });
 }
 
-export default function ClassesView({ moduleType, userPlan, onNavigate }: ClassesViewProps) {
+export default function ClassesView({ moduleType, userPlan, onNavigate, isAdmin }: ClassesViewProps) {
   const [lessons, setLessons] = useState<LessonSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLessonId, setSelectedLessonId] = useState('');
   const [lessonQuestion, setLessonQuestion] = useState('');
   const [loadingAssistant, setLoadingAssistant] = useState(false);
+  const [streamingText, setStreamingText] = useState<string | null>(null);
   const [lessonChats, setLessonChats] = useState<LessonChat>({});
   const [showMobileLessonDetail, setShowMobileLessonDetail] = useState(false);
 
@@ -411,15 +414,32 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question }),
       });
-      const data = await response.json();
 
       if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'No se pudo responder la pregunta');
       }
 
+      if (!response.body) {
+        throw new Error('No se recibió respuesta de la IA');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+      setStreamingText('');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        fullText += decoder.decode(value, { stream: true });
+        setStreamingText(fullText);
+      }
+
+      const trimmed = fullText.trim();
       setLessonChats(prev => ({
         ...prev,
-        [selectedLesson.id]: [...(prev[selectedLesson.id] || []), { role: 'assistant', text: data.answer || 'Sin respuesta' }],
+        [selectedLesson.id]: [...(prev[selectedLesson.id] || []), { role: 'assistant', text: trimmed || 'Sin respuesta' }],
       }));
     } catch (error) {
       setLessonChats(prev => ({
@@ -431,6 +451,7 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
       }));
     } finally {
       setLoadingAssistant(false);
+      setStreamingText(null);
     }
   };
 
@@ -475,7 +496,7 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-      <Navbar userPlan={userPlan} onNavigate={onNavigate} />
+      <Navbar userPlan={userPlan} onNavigate={onNavigate} isAdmin={isAdmin} />
 
       <main className="max-w-7xl mx-auto px-4 py-6 sm:p-8 space-y-6 sm:space-y-8">
         <section className="flex items-center justify-between gap-4 flex-wrap">
@@ -696,6 +717,13 @@ export default function ClassesView({ moduleType, userPlan, onNavigate }: Classe
                     {renderRichText(message.text)}
                   </div>
                 ))}
+                {loadingAssistant && (
+                  <TypingBubble
+                    partialText={streamingText && streamingText.length > 0 ? streamingText : undefined}
+                    renderRichText={streamingText ? renderRichText : undefined}
+                    variant="light"
+                  />
+                )}
               </div>
 
               <div className="mt-4 flex gap-3">

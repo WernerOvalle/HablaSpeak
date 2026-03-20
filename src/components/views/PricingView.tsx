@@ -8,6 +8,7 @@ interface PricingViewProps {
   userPlan: UserPlan;
   onNavigate: (view: View) => void;
   onSubscribe: () => void;
+  isAdmin?: boolean;
 }
 
 const FREE_FEATURES = [
@@ -24,10 +25,10 @@ const PLUS_FEATURES = [
   'Acceso a temarios premium (verbos, pronombres y estructuras)',
 ];
 
-export default function PricingView({ userPlan, onNavigate, onSubscribe }: PricingViewProps) {
+export default function PricingView({ userPlan, onNavigate, onSubscribe, isAdmin }: PricingViewProps) {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-      <Navbar userPlan={userPlan} onNavigate={onNavigate} />
+      <Navbar userPlan={userPlan} onNavigate={onNavigate} isAdmin={isAdmin} />
 
       <div className="max-w-4xl mx-auto p-12 text-center flex flex-col items-center">
         <h2 className="text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">

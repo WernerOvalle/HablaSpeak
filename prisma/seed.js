@@ -1,7 +1,5 @@
-const { PrismaClient, Plan, LessonLevel, LessonCategory } = require('@prisma/client');
+const { PrismaClient, Plan, Role, LessonLevel, LessonCategory } = require('@prisma/client');
 const { randomBytes, scryptSync } = require('crypto');
-const fs = require('fs');
-const path = require('path');
 
 const prisma = new PrismaClient();
 
@@ -9,15 +7,6 @@ function hashPassword(password) {
   const salt = randomBytes(16).toString('hex');
   const hash = scryptSync(password, salt, 64).toString('hex');
   return `${salt}:${hash}`;
-}
-
-/** Genera contraseña aleatoria segura (12 caracteres) */
-function generateSecurePassword() {
-  const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%';
-  let pwd = '';
-  const bytes = randomBytes(12);
-  for (let i = 0; i < 12; i++) pwd += chars[bytes[i] % chars.length];
-  return pwd;
 }
 
 const lessons = [
@@ -747,40 +736,24 @@ const lessons = [
 ];
 
 async function main() {
-  const premiumEmail = process.env.SEED_PREMIUM_EMAIL || 'premium@hablaspeak.com';
-  const premiumPassword = process.env.SEED_PREMIUM_PASSWORD || 'Premium123!';
-  const freeEmail = process.env.SEED_FREE_EMAIL || 'demo@hablaspeak.com';
-  const freePassword = process.env.SEED_FREE_PASSWORD || 'Demo123!';
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@hablaspeak.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!';
 
   await prisma.user.upsert({
-    where: { email: premiumEmail },
+    where: { email: adminEmail },
     update: {
-      name: 'Premium Tester',
-      hashedPassword: hashPassword(premiumPassword),
-      plan: Plan.PREMIUM,
+      name: 'Administrador',
+      hashedPassword: hashPassword(adminPassword),
+      role: Role.ADMIN,
+      active: true,
     },
     create: {
-      email: premiumEmail,
-      name: 'Premium Tester',
-      hashedPassword: hashPassword(premiumPassword),
-      plan: Plan.PREMIUM,
-      streakCurrent: 3,
-    },
-  });
-
-  await prisma.user.upsert({
-    where: { email: freeEmail },
-    update: {
-      name: 'Free Tester',
-      hashedPassword: hashPassword(freePassword),
+      email: adminEmail,
+      name: 'Administrador',
+      hashedPassword: hashPassword(adminPassword),
       plan: Plan.FREE,
-    },
-    create: {
-      email: freeEmail,
-      name: 'Free Tester',
-      hashedPassword: hashPassword(freePassword),
-      plan: Plan.FREE,
-      streakCurrent: 1,
+      role: Role.ADMIN,
+      active: true,
     },
   });
 
@@ -792,53 +765,7 @@ async function main() {
     });
   }
 
-  // ── 20 usuarios premium para clientes ────────────────────────────────────
-  // Las contraseñas se generan aleatoriamente y se guardan en seed-credentials.txt
-  // (archivo en .gitignore). Nunca se almacenan en el código.
-  // Para regenerar todas las contraseñas (si estaban comprometidas): SEED_FORCE_RESET_CLIENTS=1
-  const forceReset = process.env.SEED_FORCE_RESET_CLIENTS === '1';
-  const clientCredentials = [];
-  for (let i = 1; i <= 20; i++) {
-    const n = String(i).padStart(2, '0');
-    const email = `cliente${n}@hablaspeak.com`;
-    const existing = await prisma.user.findUnique({ where: { email } });
-    const isNew = !existing;
-    const shouldSetPassword = isNew || forceReset;
-    if (shouldSetPassword) {
-      const password = generateSecurePassword();
-      await prisma.user.upsert({
-        where: { email },
-        update: { plan: Plan.PREMIUM, hashedPassword: hashPassword(password) },
-        create: {
-          email,
-          name: `Cliente ${n}`,
-          hashedPassword: hashPassword(password),
-          plan: Plan.PREMIUM,
-          streakCurrent: 0,
-        },
-      });
-      clientCredentials.push({ email, password });
-    } else {
-      await prisma.user.update({ where: { email }, data: { plan: Plan.PREMIUM } });
-    }
-  }
-
-  if (clientCredentials.length > 0) {
-    const credPath = path.join(__dirname, 'seed-credentials.txt');
-    const lines = [
-      '# Credenciales generadas por seed - GUARDAR Y NO COMPARTIR',
-      '# Generado: ' + new Date().toISOString(),
-      '',
-      ...clientCredentials.map(({ email, password }) => `${email} | ${password}`),
-    ];
-    fs.writeFileSync(credPath, lines.join('\n'), 'utf8');
-    console.log('\n' + '═'.repeat(55));
-    console.log('  NUEVOS USUARIOS PREMIUM - credenciales en prisma/seed-credentials.txt');
-    console.log('═'.repeat(55));
-  }
-
-  console.log('\n  Emails: cliente01@hablaspeak.com ... cliente20@hablaspeak.com');
-  console.log('  (Contraseñas en seed-credentials.txt si se crearon usuarios nuevos)\n');
+  console.log('\n  Usuario admin creado:', adminEmail);
 }
 
 main()
