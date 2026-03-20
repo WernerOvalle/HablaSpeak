@@ -47,6 +47,8 @@ export async function createGroqChatCompletionRaw(messages: GroqMessage[], optio
       throw new Error('GROQ_API_KEY no configurada');
     }
 
+    console.log(`[AI] Usando Groq | modelo: ${model}`);
+
     const body = JSON.stringify({
       model,
       temperature: 0.4,
@@ -103,6 +105,8 @@ export async function createGroqChatCompletionStreamRaw(
   if (!apiKey) {
     throw new Error('GROQ_API_KEY no configurada');
   }
+
+  console.log(`[AI] Usando Groq (stream) | modelo: ${model}`);
 
   const body = JSON.stringify({
     model,

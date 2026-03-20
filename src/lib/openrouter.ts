@@ -14,6 +14,8 @@ export async function createOpenRouterChatCompletion(
     throw new Error('OPENROUTER_API_KEY no configurada');
   }
 
+  console.log(`[AI] Usando OpenRouter | modelo: ${model}`);
+
   const body = JSON.stringify({
     model,
     temperature: 0.4,
@@ -57,6 +59,8 @@ export async function createOpenRouterChatCompletionStream(
   if (!apiKey) {
     throw new Error('OPENROUTER_API_KEY no configurada');
   }
+
+  console.log(`[AI] Usando OpenRouter (stream) | modelo: ${model}`);
 
   const body = JSON.stringify({
     model,

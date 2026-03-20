@@ -38,6 +38,7 @@ services:
       - GROQ_STT_MODEL=${GROQ_STT_MODEL:-whisper-large-v3-turbo}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openrouter/free}
+      - AI_PROVIDER=${AI_PROVIDER:-}
       - DAILY_AI_LIMIT=${DAILY_AI_LIMIT:-50}
       - INTERVIEW_BLOCK_SIZE=${INTERVIEW_BLOCK_SIZE:-8}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hablaspeak.com}
