@@ -100,6 +100,7 @@ const SCENARIO_LABELS: Record<InterviewScenarioId, string> = {
   'call-center-callback-followup': 'Seguimiento de caso previo',
   'call-center-new-customer': 'Cliente nuevo',
   'call-center-language-barrier': 'Barrera de idioma',
+  'free-practice': 'Práctica libre',
 };
 
 type FeedbackEntry = {
