@@ -18,7 +18,7 @@ services:
     image: hablaspeak:latest
     container_name: hablaspeak-app
     ports:
-      - "3000:3000"
+      - "4000:3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://habla:speakpass@db:5432/hablaspeak?schema=public

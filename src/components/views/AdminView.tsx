@@ -32,6 +32,7 @@ export default function AdminView({ userPlan, onNavigate, isAdmin: _isAdmin }: A
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPassword, setEditPassword] = useState('');
   const [editPlan, setEditPlan] = useState<'FREE' | 'PREMIUM' | null>(null);
+  const [editActive, setEditActive] = useState<boolean | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
